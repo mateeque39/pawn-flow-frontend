@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const SearchLoanForm = ({ loggedInUser }) => {
-  const [customerName, setCustomerName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [customerNumber, setCustomerNumber] = useState("");
   const [email, setEmail] = useState("");
   const [transactionNumber, setTransactionNumber] = useState("");
@@ -19,10 +20,16 @@ const SearchLoanForm = ({ loggedInUser }) => {
     try {
       const response = await axios.get("http://localhost:5000/search-loan", {
         params: {
-          customerName,
+          firstName,
+          lastName,
           customerNumber,
           email,
           transactionNumber,
+          _ts: Date.now(), // cache-busting timestamp to avoid 304 cached responses
+        },
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
         },
       });
 
@@ -35,13 +42,26 @@ const SearchLoanForm = ({ loggedInUser }) => {
 
       setLoans(response.data);
       setMessage("");
+      // Fetch payment history for the first loan if it has an id
+      const firstLoan = response.data[0];
+      if (firstLoan && (firstLoan.id || firstLoan.transaction_number)) {
+        try {
+          const paymentRes = await axios.get("http://localhost:5000/payment-history", {
+            params: { loanId: firstLoan.id || firstLoan.transaction_number, _ts: Date.now() },
+            headers: {
+              'Cache-Control': 'no-cache',
+              Pragma: 'no-cache',
+            },
+          });
 
-      // Fetch payment history for the first loan (if needed, adjust for multiple loans)
-      const paymentRes = await axios.get("http://localhost:5000/payment-history", {
-        params: { loanId: response.data[0].id },
-      });
-
-      setPaymentHistory(paymentRes.data);
+          setPaymentHistory(paymentRes.data || []);
+        } catch (histErr) {
+          console.warn('Could not fetch payment history:', histErr?.response?.data || histErr.message);
+          setPaymentHistory([]);
+        }
+      } else {
+        setPaymentHistory([]);
+      }
     } catch (error) {
       console.error(error);
       setMessage("Error searching for loans");
@@ -131,12 +151,21 @@ const SearchLoanForm = ({ loggedInUser }) => {
       <form onSubmit={handleSearch}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           <div className="form-group">
-            <label>Customer Name</label>
+            <label>First Name</label>
             <input
               type="text"
-              placeholder="Search by name"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="Search by first name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Last Name</label>
+            <input
+              type="text"
+              placeholder="Search by last name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
             />
           </div>
           <div className="form-group">
@@ -186,23 +215,49 @@ const SearchLoanForm = ({ loggedInUser }) => {
         <div style={{ marginTop: '30px' }}>
           <h4 style={{ borderBottom: '2px solid #667eea', paddingBottom: '10px', marginBottom: '20px' }}>Loan Details ({loans.length})</h4>
 
-          {loans.map((loan) => (
-            <div key={loan.id} className="card">
+          {loans.map((loan, idx) => (
+            <div key={loan.id || loan.transaction_number || idx} className="card">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '15px' }}>
                 <div>
-                  <p><strong>Customer Name:</strong> {loan.customer_name}</p>
-                  <p><strong>Phone Number:</strong> {loan.customer_number}</p>
-                  <p><strong>Email:</strong> {loan.email}</p>
+                  <p><strong>First Name:</strong> {loan.first_name || loan.firstName || (loan.customer_name ? (loan.customer_name.split(' ')[0]) : '')}</p>
+                  <p><strong>Last Name:</strong> {loan.last_name || loan.lastName || (loan.customer_name ? loan.customer_name.split(' ').slice(1).join(' ') : '')}</p>
+                  <p><strong>Home Phone:</strong> {loan.home_phone || loan.homePhone || ''}</p>
+                  <p><strong>Mobile Phone:</strong> {loan.mobile_phone || loan.mobilePhone || loan.customer_number}</p>
+                  <p><strong>Email:</strong> {loan.email || loan.customer_email || loan.customerEmail || ''}</p>
+                  <p><strong>Birthdate:</strong> {loan.birthdate || loan.birth_date || ''}</p>
+                  <p><strong>Referral:</strong> {loan.referral || ''}</p>
+                  <p><strong>ID Type:</strong> {loan.id_type || loan.idType || loan.identification_type || loan.identificationType || (loan.identification && (loan.identification.type || loan.identification.id_type || loan.identification.name)) || ''}</p>
+                  <p><strong>ID Number:</strong> {loan.id_number || loan.idNumber || loan.identification_number || loan.identificationNumber || loan.id_no || loan.idNo || (loan.identification && (loan.identification.number || loan.identification.id_number || loan.identification.idNo)) || ''}</p>
+                  <p><strong>ID Details:</strong> {loan.identification_info || loan.identificationInfo || ''}</p>
+                  <p><strong>Street:</strong> {loan.street_address || loan.streetAddress || loan.address || ''}</p>
+                  <p><strong>City:</strong> {loan.city || ''}</p>
+                  <p><strong>State:</strong> {loan.state || loan.stateValue || ''}</p>
+                  <p><strong>Zipcode:</strong> {loan.zipcode || loan.postal_code || ''}</p>
                 </div>
                 <div>
-                  <p><strong>Transaction Number:</strong> {loan.transaction_number}</p>
+                  <p><strong>Transaction Number:</strong> {loan.transaction_number || loan.transactionNumber || loan.transaction_id || loan.transactionId || ''}</p>
                   <p><strong>Loan Issued Date:</strong> {loan.loan_issued_date?.substring(0, 10)}</p>
                   <p><strong>Due Date:</strong> {loan.due_date?.substring(0, 10)}</p>
                 </div>
               </div>
 
               <div style={{ backgroundColor: '#e8f4f8', padding: '12px', borderRadius: '6px', marginBottom: '15px', borderLeft: '4px solid #5dd9ff' }}>
-                <p><strong>Created by:</strong> {loan.created_by_username} (ID: {loan.created_by_user_id})</p>
+                <p>
+                  <strong>Created by:</strong>
+                  {
+                    ' ' + (
+                      loan.created_by_username || loan.createdByUsername ||
+                      (loan.created_by && (loan.created_by.username || loan.created_by.name)) ||
+                      loan.created_by || loan.createdBy || ''
+                    )
+                  }
+                  {' '}
+                  (ID: {
+                    loan.created_by_user_id || loan.createdByUserId ||
+                    (loan.created_by && (loan.created_by.id || loan.created_by.user_id)) ||
+                    loan.created_by_user || loan.creator_id || ''
+                  })
+                </p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '15px' }}>
@@ -250,8 +305,8 @@ const SearchLoanForm = ({ loggedInUser }) => {
       {paymentHistory.length > 0 && (
         <div style={{ marginTop: '30px' }}>
           <h4 style={{ borderBottom: '2px solid #667eea', paddingBottom: '10px', marginBottom: '20px' }}>Payment History</h4>
-          {paymentHistory.map((payment) => (
-            <div key={payment.id} className="card">
+          {paymentHistory.map((payment, pidx) => (
+            <div key={payment.id || pidx} className="card">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '10px' }}>
                 <p><strong>Amount Paid:</strong> $ {payment.payment_amount}</p>
                 <p><strong>Method:</strong> {payment.payment_method}</p>
