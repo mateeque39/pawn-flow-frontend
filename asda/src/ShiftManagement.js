@@ -1,0 +1,595 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const ShiftManagement = ({ userId = 1 }) => {
+  const [activeTab, setActiveTab] = useState('start-shift'); // 'start-shift', 'end-shift', 'history', 'today-summary', 'shift-report'
+  const [openingBalance, setOpeningBalance] = useState('');
+  const [closingBalance, setClosingBalance] = useState('');
+  const [notes, setNotes] = useState('');
+  const [currentShift, setCurrentShift] = useState(null);
+  const [shiftHistory, setShiftHistory] = useState([]);
+  const [todaySummary, setTodaySummary] = useState(null);
+  const [shiftReport, setShiftReport] = useState(null);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState(''); // 'success' or 'error'
+  const [selectedShiftId, setSelectedShiftId] = useState('');
+
+  // Fetch current shift on component mount
+  useEffect(() => {
+    fetchCurrentShift();
+    fetchShiftHistory();
+  }, [userId]);
+
+  const fetchCurrentShift = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/current-shift/${userId}`);
+      setCurrentShift(response.data);
+    } catch (error) {
+      setCurrentShift(null);
+    }
+  };
+
+  const fetchShiftHistory = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/shift-history/${userId}`);
+      setShiftHistory(response.data);
+    } catch (error) {
+      console.error('Error fetching shift history:', error);
+      setShiftHistory([]);
+    }
+  };
+
+  const fetchTodaySummary = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/today-shift-summary/${userId}`
+      );
+      setTodaySummary(response.data);
+      setMessage('');
+      setMessageType('');
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Error fetching today summary');
+      setMessageType('error');
+      setTodaySummary(null);
+    }
+  };
+
+  const fetchShiftReport = async (shiftId) => {
+    if (!shiftId) {
+      setMessage('Please select a shift');
+      setMessageType('error');
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/shift-report/${shiftId}`
+      );
+      setShiftReport(response.data);
+      setMessage('');
+      setMessageType('');
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Error fetching shift report');
+      setMessageType('error');
+      setShiftReport(null);
+    }
+  };
+
+  const handleStartShift = async () => {
+    if (!openingBalance || parseFloat(openingBalance) < 0) {
+      setMessage('Please enter a valid opening balance');
+      setMessageType('error');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:5000/start-shift', {
+        userId,
+        openingBalance: parseFloat(openingBalance),
+      });
+
+      setMessage(response.data.message);
+      setMessageType('success');
+      setOpeningBalance('');
+      setCurrentShift(response.data.shift);
+      fetchShiftHistory();
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Error starting shift');
+      setMessageType('error');
+      console.error(error);
+    }
+  };
+
+  const handleEndShift = async () => {
+    if (!closingBalance || parseFloat(closingBalance) < 0) {
+      setMessage('Please enter a valid closing balance');
+      setMessageType('error');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:5000/end-shift', {
+        userId,
+        closingBalance: parseFloat(closingBalance),
+        notes: notes || null,
+      });
+
+      setMessage(response.data.message);
+      setMessageType('success');
+      setClosingBalance('');
+      setNotes('');
+      setCurrentShift(null);
+      fetchShiftHistory();
+      fetchTodaySummary();
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Error ending shift');
+      setMessageType('error');
+      console.error(error);
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h3>Shift Management</h3>
+
+      {/* Tabs */}
+      <div style={{ marginBottom: '20px', borderBottom: '2px solid #007bff' }}>
+        <button
+          onClick={() => setActiveTab('start-shift')}
+          style={{
+            padding: '10px 20px',
+            marginRight: '5px',
+            backgroundColor: activeTab === 'start-shift' ? '#007bff' : '#e9ecef',
+            color: activeTab === 'start-shift' ? 'white' : 'black',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+          }}
+        >
+          Start Shift
+        </button>
+        <button
+          onClick={() => setActiveTab('end-shift')}
+          style={{
+            padding: '10px 20px',
+            marginRight: '5px',
+            backgroundColor: activeTab === 'end-shift' ? '#007bff' : '#e9ecef',
+            color: activeTab === 'end-shift' ? 'white' : 'black',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+          }}
+        >
+          End Shift
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('today-summary');
+            fetchTodaySummary();
+          }}
+          style={{
+            padding: '10px 20px',
+            marginRight: '5px',
+            backgroundColor: activeTab === 'today-summary' ? '#007bff' : '#e9ecef',
+            color: activeTab === 'today-summary' ? 'white' : 'black',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+          }}
+        >
+          Today Summary
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          style={{
+            padding: '10px 20px',
+            marginRight: '5px',
+            backgroundColor: activeTab === 'history' ? '#007bff' : '#e9ecef',
+            color: activeTab === 'history' ? 'white' : 'black',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+          }}
+        >
+          Shift History
+        </button>
+        <button
+          onClick={() => setActiveTab('shift-report')}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: activeTab === 'shift-report' ? '#007bff' : '#e9ecef',
+            color: activeTab === 'shift-report' ? 'white' : 'black',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+          }}
+        >
+          Shift Report
+        </button>
+      </div>
+
+      {/* Message Area */}
+      {message && (
+        <p
+          style={{
+            color: messageType === 'success' ? 'green' : 'red',
+            padding: '10px',
+            backgroundColor: messageType === 'success' ? '#d4edda' : '#f8d7da',
+            borderRadius: '4px',
+            marginBottom: '15px',
+          }}
+        >
+          {message}
+        </p>
+      )}
+
+      {/* START SHIFT TAB */}
+      {activeTab === 'start-shift' && (
+        <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '4px' }}>
+          <h4>Start New Shift</h4>
+
+          {currentShift && (
+            <p style={{ color: 'orange', marginBottom: '15px' }}>
+              ⚠️ You already have an active shift. Please end the current shift first.
+            </p>
+          )}
+
+          {!currentShift && (
+            <div>
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>
+                  <strong>Opening Balance ($):</strong>
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter opening balance"
+                  value={openingBalance}
+                  onChange={(e) => setOpeningBalance(e.target.value)}
+                  style={{
+                    padding: '8px',
+                    width: '100%',
+                    maxWidth: '300px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={handleStartShift}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Start Shift
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* END SHIFT TAB */}
+      {activeTab === 'end-shift' && (
+        <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '4px' }}>
+          <h4>End Shift</h4>
+
+          {!currentShift && (
+            <p style={{ color: 'orange' }}>
+              ⚠️ No active shift found. Please start a shift first.
+            </p>
+          )}
+
+          {currentShift && (
+            <div>
+              <div style={{ marginBottom: '10px', backgroundColor: '#f0f0f0', padding: '10px', borderRadius: '4px' }}>
+                <p>
+                  <strong>Shift Started:</strong>{' '}
+                  {new Date(currentShift.shift_start_time).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Opening Balance:</strong> ${' '}
+                  {parseFloat(currentShift.opening_balance).toFixed(2)}
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>
+                  <strong>Closing Balance ($):</strong>
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter closing balance"
+                  value={closingBalance}
+                  onChange={(e) => setClosingBalance(e.target.value)}
+                  style={{
+                    padding: '8px',
+                    width: '100%',
+                    maxWidth: '300px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>
+                  <strong>Notes (Optional):</strong>
+                </label>
+                <textarea
+                  placeholder="Add any notes about the shift"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  style={{
+                    padding: '8px',
+                    width: '100%',
+                    maxWidth: '300px',
+                    boxSizing: 'border-box',
+                    minHeight: '80px',
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={handleEndShift}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                End Shift
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TODAY SUMMARY TAB */}
+      {activeTab === 'today-summary' && (
+        <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '4px' }}>
+          <h4>Today's Shift Summary</h4>
+
+          {todaySummary && (
+            <div>
+              <div style={{ marginBottom: '20px', backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px' }}>
+                <h5>Shift Details</h5>
+                <p>
+                  <strong>Shift Started:</strong>{' '}
+                  {new Date(todaySummary.shift.shift_start_time).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Status:</strong>{' '}
+                  {todaySummary.shiftClosed ? 'Closed' : 'Active'}
+                </p>
+              </div>
+
+              {todaySummary.currentStats && (
+                <div style={{ marginBottom: '20px', backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px' }}>
+                  <h5>Current Statistics</h5>
+                  <p>
+                    <strong>Opening Balance:</strong> ${' '}
+                    {parseFloat(todaySummary.currentStats.openingBalance).toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Total Payments Received:</strong> ${' '}
+                    {parseFloat(todaySummary.currentStats.totalPaymentsReceived).toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Total Loans Given:</strong> ${' '}
+                    {parseFloat(todaySummary.currentStats.totalLoansGiven).toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Expected Balance:</strong> ${' '}
+                    {parseFloat(todaySummary.currentStats.expectedBalance).toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Payment Count:</strong> {todaySummary.currentStats.paymentCount}
+                  </p>
+                  <p>
+                    <strong>Loan Count:</strong> {todaySummary.currentStats.loanCount}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SHIFT HISTORY TAB */}
+      {activeTab === 'history' && (
+        <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '4px' }}>
+          <h4>Shift History</h4>
+
+          {shiftHistory.length > 0 ? (
+            <div>
+              {shiftHistory.map((shift) => (
+                <div
+                  key={shift.id}
+                  style={{
+                    marginBottom: '15px',
+                    backgroundColor: '#f9f9f9',
+                    padding: '12px',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                  }}
+                >
+                  <p>
+                    <strong>Shift ID:</strong> {shift.id}
+                  </p>
+                  <p>
+                    <strong>Started:</strong> {new Date(shift.shift_start_time).toLocaleString()}
+                  </p>
+                  <p>
+                    <strong>Ended:</strong>{' '}
+                    {shift.shift_end_time
+                      ? new Date(shift.shift_end_time).toLocaleString()
+                      : 'Active'}
+                  </p>
+                  <p>
+                    <strong>Opening Balance:</strong> ${' '}
+                    {parseFloat(shift.opening_balance).toFixed(2)}
+                  </p>
+                  {shift.closing_balance !== null && (
+                    <>
+                      <p>
+                        <strong>Closing Balance:</strong> ${' '}
+                        {parseFloat(shift.closing_balance).toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Total Payments:</strong> ${' '}
+                        {parseFloat(shift.total_payments_received || 0).toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Total Loans:</strong> ${' '}
+                        {parseFloat(shift.total_loans_given || 0).toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Status:</strong>{' '}
+                        <span
+                          style={{
+                            color: shift.is_balanced ? 'green' : 'red',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          {shift.is_balanced ? 'BALANCED' : 'DISCREPANCY'}
+                        </span>
+                      </p>
+                      {!shift.is_balanced && (
+                        <p>
+                          <strong>Difference:</strong> ${' '}
+                          {parseFloat(shift.difference).toFixed(2)}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No shift history found.</p>
+          )}
+        </div>
+      )}
+
+      {/* SHIFT REPORT TAB */}
+      {activeTab === 'shift-report' && (
+        <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '4px' }}>
+          <h4>Shift Report</h4>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>
+              <strong>Select Shift:</strong>
+            </label>
+            <select
+              value={selectedShiftId}
+              onChange={(e) => setSelectedShiftId(e.target.value)}
+              style={{
+                padding: '8px',
+                width: '100%',
+                maxWidth: '300px',
+                boxSizing: 'border-box',
+              }}
+            >
+              <option value="">Choose a shift...</option>
+              {shiftHistory.map((shift) => (
+                <option key={shift.id} value={shift.id}>
+                  Shift {shift.id} -{' '}
+                  {new Date(shift.shift_start_time).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={() => fetchShiftReport(selectedShiftId)}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              marginBottom: '15px',
+            }}
+          >
+            Generate Report
+          </button>
+
+          {shiftReport && (
+            <div>
+              <div style={{ marginBottom: '20px', backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px' }}>
+                <h5>Shift Summary</h5>
+                <p>
+                  <strong>Total Transactions:</strong> {shiftReport.summary.totalTransactions}
+                </p>
+                <p>
+                  <strong>Payment Transactions:</strong>{' '}
+                  {shiftReport.summary.totalPaymentTransactions}
+                </p>
+                <p>
+                  <strong>Loans Created:</strong> {shiftReport.summary.totalLoansCreated}
+                </p>
+              </div>
+
+              {shiftReport.payments.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h5>Payments During Shift</h5>
+                  <ul style={{ listStyle: 'none', padding: 0 }}>
+                    {shiftReport.payments.map((payment) => (
+                      <li
+                        key={payment.id}
+                        style={{
+                          padding: '8px',
+                          borderBottom: '1px solid #ddd',
+                          marginBottom: '5px',
+                        }}
+                      >
+                        <strong>{payment.customer_name}</strong> - ${' '}
+                        {parseFloat(payment.payment_amount).toFixed(2)} (
+                        {payment.payment_method}) - Txn:{' '}
+                        {payment.transaction_number}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {shiftReport.loansCreated.length > 0 && (
+                <div>
+                  <h5>Loans Created During Shift</h5>
+                  <ul style={{ listStyle: 'none', padding: 0 }}>
+                    {shiftReport.loansCreated.map((loan) => (
+                      <li
+                        key={loan.id}
+                        style={{
+                          padding: '8px',
+                          borderBottom: '1px solid #ddd',
+                          marginBottom: '5px',
+                        }}
+                      >
+                        <strong>{loan.customer_name}</strong> - ${' '}
+                        {parseFloat(loan.loan_amount).toFixed(2)} - Txn:{' '}
+                        {loan.transaction_number}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ShiftManagement;

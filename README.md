@@ -1,70 +1,263 @@
-# Getting Started with Create React App
+# PawnFlow Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Professional pawn shop management system frontend - production-ready React application with centralized configuration, error handling, and logging.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+✅ **Production-Ready Architecture**
+- Centralized HTTP client with interceptors and error handling
+- Environment-based configuration (dev/staging/production)
+- Structured logging with environment-aware output
+- Custom error handling with user-friendly messages
 
-### `npm start`
+✅ **Core Functionality**
+- Create and manage loans with comprehensive customer data
+- Search loans with multiple filter options
+- Payment history tracking
+- PDF generation for loan records
+- Dynamic pricing calculations
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+✅ **Customer Data Management**
+- First/Last Name separation
+- Email, Home Phone, Mobile Phone
+- Birthdate and referral tracking
+- Identification (Type, Number, Details)
+- Address (Street, City, State, Zipcode)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Project Structure
 
-### `npm test`
+```
+src/
+├── config/
+│   └── apiConfig.js          # Environment-based API configuration
+├── services/
+│   ├── httpClient.js         # Axios instance with interceptors
+│   ├── logger.js             # Centralized logging service
+│   └── errorHandler.js       # Error parsing and user messages
+├── CreateLoanForm.js         # Create loan form component
+├── SearchLoanForm.js         # Search and manage loans component
+├── App.js                    # Main app component
+├── index.js                  # React entry point
+└── index.css                 # Global styles
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+.env.example                  # Environment variable template
+.env.local                    # Development configuration (git-ignored)
+DEPLOYMENT.md                 # Production deployment guide
+```
 
-### `npm run build`
+## Installation
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+# Install dependencies
+npm install
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Install additional for production builds
+npm install -D cross-env
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Development
 
-### `npm run eject`
+```bash
+# Start development server (http://localhost:3000)
+npm start
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Run tests
+npm test
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Run tests with coverage
+npm run test:coverage
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Lint code
+npm run lint
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Configuration
 
-## Learn More
+### Development (.env.local)
+```env
+REACT_APP_API_URL=http://localhost:5000
+REACT_APP_ENV=development
+REACT_APP_LOG_LEVEL=debug
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Production (.env.production.local)
+```env
+REACT_APP_API_URL=https://api.yourdomain.com
+REACT_APP_ENV=production
+REACT_APP_LOG_LEVEL=error
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+See `.env.example` for all available options.
 
-### Code Splitting
+## Build
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+# Development build
+npm start
 
-### Analyzing the Bundle Size
+# Production build (optimized)
+npm run build:prod
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+# Staging build
+npm run build:staging
 
-### Making a Progressive Web App
+# Test production build locally
+npx serve -s build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## API Integration
 
-### Advanced Configuration
+All API calls use the centralized HTTP client which:
+- Automatically handles authentication tokens (when implemented)
+- Logs all requests/responses with duration
+- Provides consistent error handling
+- Applies cache-busting for fresh data
+- Respects environment configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Example API Call
+```javascript
+import { http } from '../services/httpClient';
+import logger from '../services/logger';
+import { getErrorMessage } from '../services/errorHandler';
 
-### Deployment
+try {
+  const response = await http.post('/create-loan', loanData);
+  logger.info('Loan created', response.data);
+} catch (error) {
+  const message = error.userMessage || getErrorMessage(error.parsedError);
+  logger.error('Failed to create loan', error.parsedError);
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Services
 
-### `npm run build` fails to minify
+### httpClient.js
+Centralized Axios instance with:
+- Request/response interceptors
+- Automatic error enrichment
+- Performance logging
+- Configurable base URL and timeout
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Usage:**
+```javascript
+import { http } from '../services/httpClient';
+
+http.get('/endpoint', { params: {...} });
+http.post('/endpoint', data);
+http.put('/endpoint', data);
+http.delete('/endpoint');
+```
+
+### logger.js
+Environment-aware logging:
+- Suppresses debug logs in production
+- Structured log formatting with timestamps
+- API call logging with status and duration
+
+**Usage:**
+```javascript
+import logger from '../services/logger';
+
+logger.debug('Debug message', data);
+logger.info('Info message', data);
+logger.warn('Warning message', data);
+logger.error('Error message', error);
+logger.logApiCall(method, url, status, duration);
+```
+
+### errorHandler.js
+Error normalization and user messaging:
+- Parses Axios errors to standard format
+- Detects error type (timeout, network, server, validation)
+- Generates user-friendly error messages
+
+**Usage:**
+```javascript
+import { parseError, getErrorMessage } from '../services/errorHandler';
+
+try {
+  // API call
+} catch (error) {
+  const parsed = parseError(error);
+  const message = getErrorMessage(parsed);
+  logger.error('Operation failed', parsed);
+}
+```
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## Dependencies
+
+- **react** (^19.2.0) - UI framework
+- **react-router-dom** (^7.9.6) - Routing
+- **axios** (^1.13.2) - HTTP client
+- **jspdf** (^3.0.3) - PDF generation
+- **react-scripts** (5.0.1) - Build tools
+
+## Production Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for:
+- Environment configuration for production
+- Build optimization tips
+- Deployment to Vercel/Netlify/Docker
+- CI/CD setup
+- Monitoring and logging
+- Security best practices
+
+## Performance
+
+- Production build includes code minification and tree-shaking
+- CSS and JS bundled and compressed
+- Images optimized
+- Recommended: Use CDN for static assets
+- Target: < 2s initial load time
+
+## Security
+
+- ✅ Environment variables for sensitive config
+- ✅ HTTPS enforced in production
+- ✅ CORS configured for API calls
+- ✅ User-friendly error messages (no stack traces exposed)
+- ⚠️ Backend authentication/authorization required
+
+## Troubleshooting
+
+**API connection fails**
+- Check `REACT_APP_API_URL` environment variable
+- Verify backend is running and accessible
+- Check CORS headers from backend
+- See browser Network tab for details
+
+**Build fails**
+- Delete `node_modules` and `package-lock.json`, then `npm install`
+- Check Node version (requires 14+)
+- Review build output for specific errors
+
+**Performance issues**
+- Run `npm run build:prod` and check bundle size
+- Reduce log level: `REACT_APP_LOG_LEVEL=warn`
+- Check DevTools Performance tab
+
+## Contributing
+
+1. Clone the repository
+2. Create a feature branch
+3. Follow the project structure
+4. Test locally before committing
+5. Push and create a Pull Request
+
+## License
+
+Proprietary - PawnFlow Management System
+
+## Support
+
+For issues or deployment questions, refer to:
+- `DEPLOYMENT.md` - Production setup guide
+- `src/services/` - Core service implementations
+- Browser console for detailed error logs

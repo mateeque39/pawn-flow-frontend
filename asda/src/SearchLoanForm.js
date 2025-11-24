@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import { http } from "../services/httpClient";
-import logger from "../services/logger";
-import { getErrorMessage } from "../services/errorHandler";
+import axios from "axios";
 
 const SearchLoanForm = ({ loggedInUser }) => {
   const [firstName, setFirstName] = useState("");
@@ -20,14 +18,18 @@ const SearchLoanForm = ({ loggedInUser }) => {
     e.preventDefault();
 
     try {
-      const response = await http.get("/search-loan", {
+      const response = await axios.get("http://localhost:5000/search-loan", {
         params: {
           firstName,
           lastName,
           customerNumber,
           email,
           transactionNumber,
-          _ts: Date.now(),
+          _ts: Date.now(), // cache-busting timestamp to avoid 304 cached responses
+        },
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
         },
       });
 
@@ -40,28 +42,29 @@ const SearchLoanForm = ({ loggedInUser }) => {
 
       setLoans(response.data);
       setMessage("");
-      logger.info(`Search found ${response.data.length} loan(s)`);
-
       // Fetch payment history for the first loan if it has an id
       const firstLoan = response.data[0];
       if (firstLoan && (firstLoan.id || firstLoan.transaction_number)) {
         try {
-          const paymentRes = await http.get("/payment-history", {
+          const paymentRes = await axios.get("http://localhost:5000/payment-history", {
             params: { loanId: firstLoan.id || firstLoan.transaction_number, _ts: Date.now() },
+            headers: {
+              'Cache-Control': 'no-cache',
+              Pragma: 'no-cache',
+            },
           });
 
           setPaymentHistory(paymentRes.data || []);
         } catch (histErr) {
-          logger.warn('Could not fetch payment history:', histErr?.parsedError || histErr);
+          console.warn('Could not fetch payment history:', histErr?.response?.data || histErr.message);
           setPaymentHistory([]);
         }
       } else {
         setPaymentHistory([]);
       }
     } catch (error) {
-      const userMessage = error.userMessage || getErrorMessage(error.parsedError || {});
-      setMessage(`Error searching for loans: ${userMessage}`);
-      logger.error('Search failed', error.parsedError || error);
+      console.error(error);
+      setMessage("Error searching for loans");
       setLoans([]);
       setPaymentHistory([]);
     }
@@ -78,15 +81,17 @@ const SearchLoanForm = ({ loggedInUser }) => {
       const loanToUpdate = loans.find((loan) => loan.id === selectedLoanId);
       if (!loanToUpdate) return;
 
+      // Parse the current loan amount to ensure proper arithmetic
       const currentLoanAmount = parseFloat(loanToUpdate.loan_amount);
       const amountToAddNum = parseFloat(amountToAdd);
 
+      // Recalculate new loan values
       const newLoanAmount = currentLoanAmount + amountToAddNum;
       const newInterestAmount = (newLoanAmount * loanToUpdate.interest_rate) / 100;
       const newTotalPayableAmount = newLoanAmount + newInterestAmount;
       const newRemainingBalance = newTotalPayableAmount;
 
-      const response = await http.post("/add-money", {
+      const response = await axios.post("http://localhost:5000/add-money", {
         loanId: selectedLoanId,
         amount: amountToAddNum,
         newLoanAmount,
@@ -97,8 +102,8 @@ const SearchLoanForm = ({ loggedInUser }) => {
       });
 
       alert("Money added successfully!");
-      logger.info('Money added to loan', { loanId: selectedLoanId, amount: amountToAddNum });
 
+      // Update loan amount, interest, total payable amount, and remaining balance
       setLoans(
         loans.map((loan) =>
           loan.id === selectedLoanId
@@ -113,32 +118,29 @@ const SearchLoanForm = ({ loggedInUser }) => {
         )
       );
 
-      setAmountToAdd("");
-      setSelectedLoanId(null);
+      setAmountToAdd(""); // Clear the amount input after submitting
+      setSelectedLoanId(null); // Deselect the loan
     } catch (error) {
-      const userMessage = error.userMessage || getErrorMessage(error.parsedError || {});
-      alert(`Error adding money: ${userMessage}`);
-      logger.error('Failed to add money', error.parsedError || error);
+      alert("Error adding money");
+      console.error(error);
     }
   };
 
   // Redeem loan if fully paid
   const handleRedeemLoan = async (loanId) => {
     try {
-      const response = await http.post("/redeem-loan", {
+      const response = await axios.post("http://localhost:5000/redeem-loan", {
         loanId,
         redeemedByUserId: loggedInUser?.id,
         redeemedByUsername: loggedInUser?.username
       });
 
       alert("Loan redeemed successfully!");
-      logger.info('Loan redeemed', { loanId });
-
+      // Optionally, update the loan status in your frontend after redemption
       setLoans(loans.map((loan) => (loan.id === loanId ? { ...loan, status: "redeemed" } : loan)));
     } catch (error) {
-      const userMessage = error.userMessage || getErrorMessage(error.parsedError || {});
-      alert(`Error redeeming loan: ${userMessage}`);
-      logger.error('Failed to redeem loan', error.parsedError || error);
+      console.error(error);
+      alert("Error redeeming loan");
     }
   };
 

@@ -8,7 +8,6 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.13.2",
-    "cross-env": "^7.0.3",
     "jspdf": "^3.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -18,14 +17,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "start:prod": "REACT_APP_ENV=production react-scripts start",
     "build": "react-scripts build",
-    "build:staging": "cross-env REACT_APP_ENV=staging react-scripts build",
-    "build:prod": "cross-env REACT_APP_ENV=production REACT_APP_LOG_LEVEL=error react-scripts build",
     "test": "react-scripts test",
-    "test:coverage": "react-scripts test --coverage --watchAll=false",
-    "eject": "react-scripts eject",
-    "lint": "eslint src/"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [

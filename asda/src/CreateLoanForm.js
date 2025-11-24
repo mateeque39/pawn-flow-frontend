@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { jsPDF } from 'jspdf';
-import { http } from '../services/httpClient';
-import logger from '../services/logger';
-import { getErrorMessage } from '../services/errorHandler';
+import axios from 'axios';
+import { jsPDF } from 'jspdf'; // Import jsPDF for PDF generation
 
 const CreateLoanForm = ({ loggedInUser }) => {
   // State variables for the form fields
@@ -96,19 +94,26 @@ const CreateLoanForm = ({ loggedInUser }) => {
     };
 
     try {
-      logger.debug('Creating loan with data:', loanData);
-      const response = await http.post('/create-loan', loanData);
+      console.log('Creating loan, payload:', loanData);
+      const response = await axios.post('http://localhost:5000/create-loan', loanData);
       setMessage('Loan created successfully!');
-      logger.info('Loan created successfully', { transactionNumber: response.data.loan?.transaction_number });
 
       // Generate PDF after loan creation
-      if (response.data.loan) {
-        generatePDF(response.data.loan);
-      }
+      generatePDF(response.data.loan);
+
+      // Reset the form or update UI as needed
+      console.log(response.data); // Optionally log the created loan
     } catch (error) {
-      const userMessage = error.userMessage || getErrorMessage(error.parsedError || {});
-      setMessage(`Error creating loan: ${userMessage}`);
-      logger.error('Failed to create loan', error.parsedError || error);
+      const status = error?.response?.status;
+      const respData = error?.response?.data;
+      const serverMessage = respData?.message || respData || error.message;
+      setMessage(`Error creating loan${status ? ` (status ${status})` : ''}: ${serverMessage}`);
+      console.error('Create loan error:', {
+        message: error.message,
+        status,
+        responseData: respData,
+        request: error?.request,
+      });
     }
   };
 
