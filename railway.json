@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npm install && npm run build",
+  "startCommand": "caddy run --config /Caddyfile --adapter caddyfile"
+}
