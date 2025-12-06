@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { http } from './services/httpClient';
+import { parseError, getErrorMessage } from './services/errorHandler';
+import logger from './services/logger';
 
 const RedeemLoanForm = ({ loggedInUser }) => {
   const [loanId, setLoanId] = useState('');
@@ -12,20 +14,23 @@ const RedeemLoanForm = ({ loggedInUser }) => {
   // Search loan by transaction number
   const handleSearchLoan = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/search-loan', {
-        params: { transactionNumber: loanId },
+      const response = await http.get('/search-loan', {
+        params: { transactionNumber: loanId, _ts: Date.now() },
       });
 
-      if (response.data.length === 0) {
+      if (response.length === 0) {
         setMessage('Loan not found');
         setLoans([]);
       } else {
-        setLoans(response.data);  // Update state with multiple loans
+        setLoans(response);
         setMessage('');
+        logger.debug('Loans found', { count: response.length });
       }
     } catch (error) {
-      setMessage('Error searching loan');
-      console.error(error);
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(userMessage);
+      logger.error('Error searching loan', parsedError);
     }
   };
 
@@ -37,19 +42,21 @@ const RedeemLoanForm = ({ loggedInUser }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/redeem-loan', {
+      const response = await http.post('/redeem-loan', {
         loanId: loan.id,
         redeemedByUserId: loggedInUser?.id,
         redeemedByUsername: loggedInUser?.username
       });
 
-      // If redemption is successful, update the loan and redeem history
       setMessage('Loan redeemed successfully!');
-      setRedeemHistory([response.data.redeemHistory, ...redeemHistory]); // Add redeem history
-      setLoans(loans.map((l) => (l.id === loan.id ? { ...l, status: 'redeemed' } : l))); // Update loan status in the list
+      setRedeemHistory([response.redeemHistory, ...redeemHistory]);
+      setLoans(loans.map((l) => (l.id === loan.id ? { ...l, status: 'redeemed' } : l)));
+      logger.info('Loan redeemed successfully', { loanId: loan.id });
     } catch (error) {
-      setMessage('Error redeeming loan');
-      console.error(error);
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(userMessage);
+      logger.error('Error redeeming loan', parsedError);
     }
   };
 
@@ -61,17 +68,20 @@ const RedeemLoanForm = ({ loggedInUser }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/forfeit-loan', {
+      const response = await http.post('/forfeit-loan', {
         loanId: loan.id,
         forfeitedByUserId: loggedInUser?.id,
         forfeitedByUsername: loggedInUser?.username
       });
 
       setForfeitMessage('Loan forfeited successfully!');
-      setLoans(loans.map((l) => (l.id === loan.id ? { ...l, status: 'forfeited' } : l))); // Update loan status in the list
+      setLoans(loans.map((l) => (l.id === loan.id ? { ...l, status: 'forfeited' } : l)));
+      logger.info('Loan forfeited successfully', { loanId: loan.id });
     } catch (error) {
-      setForfeitMessage('Error forfeiting loan');
-      console.error(error);
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setForfeitMessage(userMessage);
+      logger.error('Error forfeiting loan', parsedError);
     }
   };
 
@@ -115,7 +125,7 @@ const RedeemLoanForm = ({ loggedInUser }) => {
                 <p><strong>Status:</strong> <span className={`badge badge-${loan.status === 'active' ? 'success' : loan.status === 'redeemed' ? 'info' : 'danger'}`}>{loan.status}</span></p>
               </div>
 
-              <p><strong>Collateral:</strong> {loan.collateral_description}</p>
+              <p><strong>Collateral:</strong> {loan.item_description || loan.itemDescription || loan.collateral_description || loan.collateralDescription || 'N/A'}</p>
 
               {/* Redeem or Forfeit buttons */}
               {loan.remaining_balance === 0 && loan.status === 'active' && (

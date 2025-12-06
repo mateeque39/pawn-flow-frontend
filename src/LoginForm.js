@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';  // Import the Link component for navigation
+import { http } from './services/httpClient';
+import logger from './services/logger';
+import { getErrorMessage } from './services/errorHandler';
 
 const LoginForm = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
@@ -11,15 +12,22 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post('http://localhost:5000/login', { username, password });
+      logger.debug('Attempting login for user:', { username });
+      const res = await http.post('/login', { username, password });
       
       // After successful login, pass the user details to the parent component (App)
-      const user = { username: res.data.username }; // Assuming the backend returns the username
-      onLoginSuccess(user);  // This will trigger the state update in App.js
-
+      const user = { username: res.data.username, id: res.data.id };
+      // Store token in localStorage for httpClient interceptor
+      if (res.data.token) {
+        localStorage.setItem('authToken', res.data.token);
+      }
+      onLoginSuccess(user);
+      logger.info('Login successful', { username });
       setMessage('Login successful!');
     } catch (err) {
-      setMessage('Login failed: Invalid credentials');
+      const userMessage = err.userMessage || getErrorMessage(err.parsedError || {});
+      setMessage(`Login failed: ${userMessage}`);
+      logger.error('Login failed', err.parsedError || err);
     }
   };
 
@@ -63,3 +71,4 @@ const LoginForm = ({ onLoginSuccess }) => {
 };
 
 export default LoginForm;
+

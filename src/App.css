@@ -314,6 +314,7 @@ input[type="number"],
 input[type="date"],
 textarea,
 select {
+  width: 100%;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 16px 18px;
   border: 2px solid #3a5a7a;
@@ -372,6 +373,7 @@ label {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .form-group label {
@@ -429,6 +431,14 @@ label {
   background: linear-gradient(135deg, #fff5d8 0%, #ffe6b0 100%);
   color: #8b6f1a;
   border-left-color: #ffc76a;
+  padding: 18px 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border-left: 5px solid #ffc76a;
+  animation: slideIn 0.3s ease;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 /* ============================================

@@ -63,7 +63,22 @@ class Logger {
    */
   error(message, error) {
     if (this.shouldLog('error')) {
-      console.error(this.formatMessage('error', message), error || '');
+      // Serialize error object for better display
+      let errorData = error;
+      if (error && typeof error === 'object') {
+        errorData = {
+          message: error.message,
+          status: error.status,
+          data: error.data,
+          isTimeout: error.isTimeout,
+          isNetworkError: error.isNetworkError,
+          isServerError: error.isServerError,
+          isClientError: error.isClientError,
+          isValidationError: error.isValidationError,
+          stack: error.stack?.split('\n').slice(0, 3).join('\n') // First 3 lines of stack
+        };
+      }
+      console.error(this.formatMessage('error', message), errorData || '');
     }
   }
 
@@ -80,4 +95,5 @@ class Logger {
   }
 }
 
-export default new Logger();
+const logger = new Logger();
+export default logger;

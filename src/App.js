@@ -1,20 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';  // Import needed routing components
+import { Route, Switch, Redirect } from 'react-router-dom';
+import logger from './services/logger';
 import RegisterForm from './RegisterForm';
 import LoginForm from './LoginForm';
-import CreateLoanForm from './CreateLoanForm';
-import SearchLoanForm from './SearchLoanForm';
-import MakePaymentForm from './MakePaymentForm';
-import RedeemLoanForm from './RedeemLoanForm';
-import ExtendLoanForm from './ExtendLoanForm';
-import ForfeitLoanForm from './ForfeitLoanForm';
 import ShiftManagement from './ShiftManagement';
-import CheckDueDateForm from './CheckDueDateForm';
+import CashReport from './CashReport';
+import CreateCustomerProfileForm from './CreateCustomerProfileForm';
+import ManageCustomerProfileForm from './ManageCustomerProfileForm';
+import UpdateCustomerForm from './UpdateCustomerForm';
+import PDFSettingsForm from './PDFSettingsForm';
 import ErrorBoundary from './ErrorBoundary'; // Import the ErrorBoundary component
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
-  const [loggedInUser, setLoggedInUser] = useState(null); // Track logged-in user
+  const [isRegister, setIsRegister] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState(() => {
+    // Restore logged-in user from localStorage on app load
+    const saved = localStorage.getItem('loggedInUser');
+    if (saved) {
+      try {
+        const user = JSON.parse(saved);
+        // SECURITY: Only restore if valid token exists
+        if (user && user.token) {
+          logger.info('User session restored from localStorage');
+          return user;
+        } else {
+          // Invalid session - force re-login
+          localStorage.removeItem('loggedInUser');
+          return null;
+        }
+      } catch (e) {
+        logger.warn('Failed to parse saved user:', e);
+        localStorage.removeItem('loggedInUser');
+        return null;
+      }
+    }
+    return null;
+  });
   const [selectedOption, setSelectedOption] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Get dark mode preference from localStorage
@@ -36,12 +58,21 @@ function App() {
   const handleLoginSuccess = (user) => {
     setLoggedInUser(user);
     setIsLogin(false);
+    setIsRegister(false); // Hide register form
+    // Save user to localStorage to persist across page refreshes
+    localStorage.setItem('loggedInUser', JSON.stringify(user));
+    logger.info('User logged in successfully:', { username: user.username, role: user.role });
   };
 
   // Handle Logout
   const handleLogout = () => {
     setLoggedInUser(null); // Clear logged-in user state
     setIsLogin(true); // Redirect back to login
+    setIsRegister(false); // Hide register form
+    // Remove user from localStorage
+    localStorage.removeItem('loggedInUser');
+    setSelectedOption(''); // Clear selected menu option
+    logger.info('User logged out');
   };
 
   const toggleDarkMode = () => {
@@ -64,39 +95,55 @@ function App() {
       </div>
 
       <div className="container">
-        {isLogin ? (
+        {isRegister ? (
+          <div className="form-container">
+            <h2>Register New User</h2>
+            <RegisterForm loggedInUser={loggedInUser} onRegisterSuccess={() => setIsRegister(false)} />
+            <p style={{ textAlign: 'center', marginTop: '20px' }}>
+              <a href="#" onClick={() => setIsRegister(false)}>Back to Login</a>
+            </p>
+          </div>
+        ) : isLogin ? (
           <div className="form-container">
             <h2>Login</h2>
             <LoginForm onLoginSuccess={handleLoginSuccess} />
             <p style={{ textAlign: 'center', marginTop: '20px' }}>
-              Don't have an account? <a href="/register">Register here</a>
+              Don't have an account? <a href="#" onClick={() => {
+                // Only allow registration if user is already logged in as admin
+                logger.warn('Registration page only accessible from dashboard by admins');
+              }}>Contact your administrator</a>
             </p>
           </div>
         ) : (
           <div>
             <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Welcome to Dashboard, {loggedInUser.username}</h2>
             <div className="menu">
-              <button className="btn-primary" onClick={() => setSelectedOption('create-loan')}>Create Loan</button>
-              <button className="btn-info" onClick={() => setSelectedOption('search-loan')}>Search Loan</button>
-              <button className="btn-success" onClick={() => setSelectedOption('make-payment')}>Make Payments</button>
-              <button className="btn-warning" onClick={() => setSelectedOption('extend-loan')}>Extend Loan</button>
-              <button className="btn-primary" onClick={() => setSelectedOption('redeem-loan')}>Redeem Loan</button>
-              <button className="btn-danger" onClick={() => setSelectedOption('forfeit-loan')}>Forfeit Loan</button>
+              <button className="btn-primary" onClick={() => setSelectedOption('create-profile')}>👤 Create Customer Profile</button>
+              <button className="btn-success" onClick={() => setSelectedOption('manage-profile')}>⚙️ Manage Profile & Loans</button>
+              <button className="btn-info" onClick={() => setSelectedOption('edit-loan')}>✏️ Edit Existing Loan</button>
+              <button className="btn-warning" onClick={() => setSelectedOption('pdf-settings')}>📄 PDF Settings</button>
               <button className="btn-info" onClick={() => setSelectedOption('shift-management')}>Shift Management</button>
-              <button className="btn-warning" onClick={() => setSelectedOption('check-due-date')}>Check Due Date</button>
+              <button className="btn-success" onClick={() => setSelectedOption('cash-report')}>💰 Cash Report</button>
+              {loggedInUser.role === 'admin' && (
+                <button className="btn-warning" onClick={() => setSelectedOption('register-user')}>👥 Register User (Admin Only)</button>
+              )}
               <button className="btn-danger" onClick={handleLogout}>Logout</button>
             </div>
 
             {/* Wrap the components inside ErrorBoundary to catch runtime errors */}
             <ErrorBoundary>
-              {selectedOption === 'create-loan' && <CreateLoanForm loggedInUser={loggedInUser} />}
-              {selectedOption === 'search-loan' && <SearchLoanForm loggedInUser={loggedInUser} />}
-              {selectedOption === 'make-payment' && <MakePaymentForm loggedInUser={loggedInUser} />}
-              {selectedOption === 'extend-loan' && <ExtendLoanForm loggedInUser={loggedInUser} />}
-              {selectedOption === 'redeem-loan' && <RedeemLoanForm loggedInUser={loggedInUser} />}
-              {selectedOption === 'forfeit-loan' && <ForfeitLoanForm loggedInUser={loggedInUser} />}
+              {selectedOption === 'create-profile' && <CreateCustomerProfileForm loggedInUser={loggedInUser} />}
+              {selectedOption === 'manage-profile' && <ManageCustomerProfileForm loggedInUser={loggedInUser} />}
+              {selectedOption === 'edit-loan' && <UpdateCustomerForm loggedInUser={loggedInUser} />}
+              {selectedOption === 'pdf-settings' && <PDFSettingsForm loggedInUser={loggedInUser} />}
               {selectedOption === 'shift-management' && <ShiftManagement />}
-              {selectedOption === 'check-due-date' && <CheckDueDateForm />}
+              {selectedOption === 'cash-report' && <CashReport loggedInUser={loggedInUser} />}
+              {selectedOption === 'register-user' && loggedInUser.role === 'admin' && (
+                <div className="form-container">
+                  <h3>Register New User (Admin Only)</h3>
+                  <RegisterForm loggedInUser={loggedInUser} onRegisterSuccess={() => setSelectedOption('')} />
+                </div>
+              )}
             </ErrorBoundary>
           </div>
         )}

@@ -27,11 +27,11 @@ axiosInstance.interceptors.request.use(
 
     logger.debug(`[REQUEST] ${config.method.toUpperCase()} ${config.url}`);
 
-    // Add auth token if available (uncomment when auth is implemented)
-    // const token = localStorage.getItem('authToken');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // Add auth token if available
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
     return config;
   },
@@ -71,7 +71,15 @@ axiosInstance.interceptors.response.use(
     }
 
     const parsedError = parseError(error);
-    logger.error(`[ERROR] ${error.config?.url}`, parsedError);
+    
+    // Log with just the key error info to avoid [Object] in console
+    logger.error(`[ERROR] ${error.config?.url || 'unknown'}: ${parsedError.message}`, {
+      status: parsedError.status,
+      message: parsedError.message,
+      isNetworkError: parsedError.isNetworkError,
+      isTimeout: parsedError.isTimeout,
+      isServerError: parsedError.isServerError
+    });
 
     // Enrich error with user-friendly message
     error.userMessage = getErrorMessage(parsedError);

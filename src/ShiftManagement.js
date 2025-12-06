@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { http } from './services/httpClient';
+import { parseError, getErrorMessage } from './services/errorHandler';
+import logger from './services/logger';
 
 const ShiftManagement = ({ userId = 1 }) => {
   const [activeTab, setActiveTab] = useState('start-shift'); // 'start-shift', 'end-shift', 'history', 'today-summary', 'shift-report'
@@ -22,35 +24,64 @@ const ShiftManagement = ({ userId = 1 }) => {
 
   const fetchCurrentShift = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/current-shift/${userId}`);
-      setCurrentShift(response.data);
+      const response = await http.get(`/current-shift/${userId}`);
+      // Get data from axios response
+      const shiftData = response?.data;
+      setCurrentShift(shiftData || null);
+      if (shiftData) {
+        logger.debug('Current shift fetched', { userId, shiftId: shiftData.id });
+      } else {
+        logger.debug('No active shift found', { userId });
+      }
     } catch (error) {
       setCurrentShift(null);
+      const parsedError = error.parsedError || parseError(error);
+      if (parsedError.status === 404 || parsedError.status === 0) {
+        // 404 or no response is expected when there's no active shift
+        logger.debug('No active shift found', { userId });
+      } else {
+        logger.warn('Error fetching current shift', { status: parsedError.status, message: parsedError.message });
+      }
     }
   };
 
   const fetchShiftHistory = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/shift-history/${userId}`);
-      setShiftHistory(response.data);
+      const response = await http.get(`/shift-history/${userId}`);
+      // Get data from axios response - should be an array
+      const historyData = Array.isArray(response?.data) ? response.data : [];
+      setShiftHistory(historyData);
+      logger.debug('Shift history fetched', { userId, count: historyData.length });
     } catch (error) {
-      console.error('Error fetching shift history:', error);
+      const parsedError = error.parsedError || parseError(error);
+      logger.error('Error fetching shift history - ' + parsedError.message, parsedError);
       setShiftHistory([]);
     }
   };
 
   const fetchTodaySummary = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:5000/today-shift-summary/${userId}`
-      );
-      setTodaySummary(response.data);
+      const response = await http.get(`/today-shift-summary/${userId}`);
+      // Get data from axios response
+      const summaryData = response?.data;
+      setTodaySummary(summaryData);
       setMessage('');
       setMessageType('');
+      logger.debug('Today summary fetched', { userId });
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error fetching today summary');
-      setMessageType('error');
-      setTodaySummary(null);
+      const parsedError = error.parsedError || parseError(error);
+      const userMessage = error.userMessage || getErrorMessage(parsedError);
+      
+      // 404 is ok - just means no summary for today
+      if (parsedError.status === 404) {
+        logger.debug('No shift summary available for today', { userId });
+        setTodaySummary(null);
+      } else {
+        setMessage(userMessage);
+        setMessageType('error');
+        setTodaySummary(null);
+        logger.error('Error fetching today summary - ' + parsedError.message, parsedError);
+      }
     }
   };
 
@@ -62,16 +93,20 @@ const ShiftManagement = ({ userId = 1 }) => {
     }
 
     try {
-      const response = await axios.get(
-        `http://localhost:5000/shift-report/${shiftId}`
-      );
-      setShiftReport(response.data);
+      const response = await http.get(`/shift-report/${shiftId}`);
+      // Get data from axios response
+      const reportData = response?.data;
+      setShiftReport(reportData);
       setMessage('');
       setMessageType('');
+      logger.debug('Shift report fetched', { shiftId });
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error fetching shift report');
+      const parsedError = error.parsedError || parseError(error);
+      const userMessage = error.userMessage || getErrorMessage(parsedError);
+      setMessage(userMessage);
       setMessageType('error');
       setShiftReport(null);
+      logger.error('Error fetching shift report - ' + parsedError.message, parsedError);
     }
   };
 
@@ -83,20 +118,51 @@ const ShiftManagement = ({ userId = 1 }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/start-shift', {
+      const payload = {
         userId,
         openingBalance: parseFloat(openingBalance),
-      });
+      };
+      logger.debug('Starting shift with payload:', payload);
+      
+      const response = await http.post('/start-shift', payload);
+      const responseData = response?.data || {};
 
-      setMessage(response.data.message);
+      // Handle both direct response and response.data
+      const shiftData = responseData?.shift || responseData;
+      const message = responseData?.message || 'Shift started successfully!';
+      
+      setMessage(message);
       setMessageType('success');
       setOpeningBalance('');
-      setCurrentShift(response.data.shift);
+      setCurrentShift(shiftData);
       fetchShiftHistory();
+      logger.info('Shift started', { userId, openingBalance, shiftId: shiftData?.id });
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error starting shift');
-      setMessageType('error');
-      console.error(error);
+      const parsedError = error.parsedError || parseError(error);
+      const userMessage = error.userMessage || getErrorMessage(parsedError);
+      
+      // If the error says "already has an active shift", create a placeholder shift state
+      if (parsedError.message && parsedError.message.includes('already has an active shift')) {
+        logger.warn('Active shift exists but not fetched, setting placeholder shift');
+        // Set a placeholder shift so user can see the End Shift tab
+        setCurrentShift({
+          id: 'active',
+          user_id: userId,
+          is_active: true,
+          opening_balance: openingBalance,
+          shift_start_time: new Date().toISOString(),
+          shift_end_time: null
+        });
+        setMessage('An active shift was found. You can now end it.');
+        setMessageType('info');
+      } else {
+        setMessage(userMessage);
+        setMessageType('error');
+      }
+      
+      logger.error('Error starting shift - Status: ' + parsedError.status + ', Message: ' + parsedError.message, parsedError);
+      // Refresh current shift state to sync with backend
+      fetchCurrentShift();
     }
   };
 
@@ -107,24 +173,45 @@ const ShiftManagement = ({ userId = 1 }) => {
       return;
     }
 
+    if (!currentShift) {
+      setMessage('No active shift to end. Please start a shift first.');
+      setMessageType('error');
+      logger.warn('Attempted to end shift but no currentShift in state');
+      return;
+    }
+
     try {
-      const response = await axios.post('http://localhost:5000/end-shift', {
+      const payload = {
         userId,
         closingBalance: parseFloat(closingBalance),
         notes: notes || null,
-      });
+        shiftId: currentShift?.id // Include shift ID if available
+      };
+      logger.debug('Ending shift with payload:', payload);
+      
+      const response = await http.post('/end-shift', payload);
+      const responseData = response?.data || {};
 
-      setMessage(response.data.message);
+      // Handle both direct response and response.data
+      const message = responseData?.message || 'Shift ended successfully!';
+      
+      setMessage(message);
       setMessageType('success');
       setClosingBalance('');
       setNotes('');
       setCurrentShift(null);
+      setOpeningBalance(''); // Also clear opening balance
       fetchShiftHistory();
       fetchTodaySummary();
+      logger.info('Shift ended', { userId, closingBalance });
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error ending shift');
+      const parsedError = error.parsedError || parseError(error);
+      const userMessage = error.userMessage || getErrorMessage(parsedError);
+      setMessage(userMessage);
       setMessageType('error');
-      console.error(error);
+      logger.error('Error ending shift - Status: ' + parsedError.status + ', Message: ' + parsedError.message, parsedError);
+      // Refresh current shift state to sync with backend
+      fetchCurrentShift();
     }
   };
 

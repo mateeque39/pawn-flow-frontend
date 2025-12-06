@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { http } from './services/httpClient';
+import { parseError, getErrorMessage } from './services/errorHandler';
+import logger from './services/logger';
 
 const MakePaymentForm = ({ loggedInUser }) => {
   const [transactionNumber, setTransactionNumber] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [redemptionFee, setRedemptionFee] = useState("");
   const [loan, setLoan] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [message, setMessage] = useState("");
@@ -13,33 +16,34 @@ const MakePaymentForm = ({ loggedInUser }) => {
   // Search loan using transaction number
   const handleSearchLoan = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/search-loan", {
-        params: { transactionNumber },
+      const response = await http.get("/search-loan", {
+        params: { transactionNumber, _ts: Date.now() },
       });
 
-      if (!response.data || response.data.length === 0) {
+      if (!response || response.length === 0) {
         setMessage("Loan not found");
         setLoan(null);
         setPaymentHistory([]);
         return;
       }
 
-      const foundLoan = response.data[0];
+      const foundLoan = response[0];
       setLoan(foundLoan);
       setMessage("");
 
-      // Fetch payment history safely
-      const historyRes = await axios.get("http://localhost:5000/payment-history", {
+      // Fetch payment history
+      const historyRes = await http.get("/payment-history", {
         params: { loanId: foundLoan.id },
       });
 
-      // Important: backend should return { payments: [] }
-      const history = historyRes.data?.payments || historyRes.data || [];
-
-      setPaymentHistory(history.filter((p) => p)); // remove null/undefined
+      const history = historyRes?.payments || historyRes || [];
+      setPaymentHistory(history.filter((p) => p));
+      logger.debug('Loan and payment history retrieved', { loanId: foundLoan.id });
     } catch (error) {
-      console.error(error);
-      setMessage("Error searching loan");
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(userMessage);
+      logger.error('Error searching loan', parsedError);
     }
   };
 
@@ -63,48 +67,54 @@ const MakePaymentForm = ({ loggedInUser }) => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/make-payment", {
-        loanId: loan.id,
+      // Check if this payment will fully redeem the loan
+      const remainingAfterPayment = parseFloat(loan.remaining_balance) - parseFloat(paymentAmount);
+      const willFullyPay = remainingAfterPayment <= 0;
+
+      const response = await http.post(`/customers/${loan.customer_id}/loans/${loan.id}/payment`, {
         paymentMethod,
         paymentAmount,
-        processedByUserId: loggedInUser?.id,
-        processedByUsername: loggedInUser?.username
+        userId: loggedInUser?.id,
+        redemptionFee: (willFullyPay && redemptionFee) ? parseFloat(redemptionFee) : undefined
       });
 
       setMessage("Payment successful!");
 
       // Update loan details with new remaining balance
-      setLoan(response.data.loan);
+      setLoan(response.loan);
 
       // Add new payment record to history
-      setPaymentHistory([response.data.paymentHistory, ...paymentHistory]);
+      setPaymentHistory([response.paymentHistory, ...paymentHistory]);
 
       // Check if loan is fully paid
-      if (response.data.loan.remaining_balance === 0) {
-        setMessage("Loan is now fully paid, ready for redemption.");
+      if (response.loan.remaining_balance === 0) {
+        setMessage("🎉 Loan is now fully paid and automatically redeemed!");
       }
 
       // Check if payment covers interest and attempt to extend due date
       const totalPaymentsMade = paymentHistory.reduce((sum, p) => sum + parseFloat(p.payment_amount || 0), 0) + parseFloat(paymentAmount);
       if (totalPaymentsMade >= loan.interest_amount && new Date() > new Date(loan.due_date)) {
-        // Attempt to extend loan due date
         try {
-          const extendResponse = await axios.post("http://localhost:5000/extend-loan", {
+          const extendResponse = await http.post("/extend-loan", {
             loanId: loan.id,
           });
           setMessage("Payment successful! Loan due date extended by 30 days!");
-          setLoan(extendResponse.data.loan);
+          setLoan(extendResponse.loan);
           setLoanDueDateExtended(true);
+          logger.info('Payment successful and loan extended', { loanId: loan.id });
         } catch (extendError) {
-          // If extend fails (e.g., due date hasn't passed yet), just show success message
           setMessage("Payment successful!");
+          logger.info('Payment successful', { loanId: loan.id });
         }
       }
 
-      setPaymentAmount(""); // Clear payment amount after successful submission
+      setPaymentAmount("");
+      setRedemptionFee("");
     } catch (error) {
-      console.error(error);
-      setMessage("Error making payment");
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(userMessage);
+      logger.error('Error making payment', parsedError);
     }
   };
 
@@ -168,6 +178,24 @@ const MakePaymentForm = ({ loggedInUser }) => {
                     required
                   />
                 </div>
+
+                {/* Show redemption fee input only if payment will fully pay the loan */}
+                {paymentAmount && loan.remaining_balance && (parseFloat(loan.remaining_balance) - parseFloat(paymentAmount)) <= 0 && (
+                  <div className="form-group">
+                    <label>Redemption Fee - Optional (repairs, processing, etc.) ($)</label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={redemptionFee}
+                      onChange={(e) => setRedemptionFee(e.target.value)}
+                      min="0"
+                      step="0.01"
+                    />
+                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                      This fee will be charged when the item is redeemed (one-time fee)
+                    </small>
+                  </div>
+                )}
 
                 <button type="submit" className="btn-success" style={{ width: '100%' }}>Process Payment</button>
               </form>

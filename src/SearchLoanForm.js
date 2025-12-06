@@ -1,19 +1,20 @@
 import React, { useState } from "react";
-import { http } from "../services/httpClient";
-import logger from "../services/logger";
-import { getErrorMessage } from "../services/errorHandler";
+import { http } from "./services/httpClient";
+import logger from "./services/logger";
+import { getErrorMessage } from "./services/errorHandler";
 
 const SearchLoanForm = ({ loggedInUser }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [customerNumber, setCustomerNumber] = useState("");
+  const [homePhone, setHomePhone] = useState("");
+  const [mobilePhone, setMobilePhone] = useState("");
   const [email, setEmail] = useState("");
   const [transactionNumber, setTransactionNumber] = useState("");
   const [loans, setLoans] = useState([]);
   const [message, setMessage] = useState("");
   const [paymentHistory, setPaymentHistory] = useState([]);
-  const [amountToAdd, setAmountToAdd] = useState(""); // State to track money to add
-  const [selectedLoanId, setSelectedLoanId] = useState(null); // Track the loan to which money is added
+  const [amountToAdd, setAmountToAdd] = useState("");
+  const [selectedLoanId, setSelectedLoanId] = useState(null);
 
   // Handle loan search
   const handleSearch = async (e) => {
@@ -24,7 +25,8 @@ const SearchLoanForm = ({ loggedInUser }) => {
         params: {
           firstName,
           lastName,
-          customerNumber,
+          homePhone,
+          mobilePhone,
           email,
           transactionNumber,
           _ts: Date.now(),
@@ -41,6 +43,24 @@ const SearchLoanForm = ({ loggedInUser }) => {
       setLoans(response.data);
       setMessage("");
       logger.info(`Search found ${response.data.length} loan(s)`);
+      console.log('Search results:', JSON.stringify(response.data, null, 2));
+      
+      // Debug: Log first loan's full object to see all available fields
+      if (response.data.length > 0) {
+        console.log('FIRST LOAN FULL OBJECT:', response.data[0]);
+        console.log('FIRST LOAN KEYS:', Object.keys(response.data[0]));
+      }
+      
+      // Enhance loans with creator info from localStorage if backend didn't return it
+      const createdLoans = JSON.parse(localStorage.getItem('createdLoans') || '{}');
+      response.data.forEach(loan => {
+        const transactionId = loan.transaction_number || loan.id;
+        if (!loan.created_by_username && createdLoans[transactionId]) {
+          loan.created_by_username = createdLoans[transactionId].created_by_username;
+          loan.created_by_user_id = createdLoans[transactionId].created_by_user_id;
+          logger.debug('Enhanced loan with localStorage creator info:', transactionId);
+        }
+      });
 
       // Fetch payment history for the first loan if it has an id
       const firstLoan = response.data[0];
@@ -86,7 +106,7 @@ const SearchLoanForm = ({ loggedInUser }) => {
       const newTotalPayableAmount = newLoanAmount + newInterestAmount;
       const newRemainingBalance = newTotalPayableAmount;
 
-      const response = await http.post("/add-money", {
+      await http.post("/add-money", {
         loanId: selectedLoanId,
         amount: amountToAddNum,
         newLoanAmount,
@@ -125,7 +145,7 @@ const SearchLoanForm = ({ loggedInUser }) => {
   // Redeem loan if fully paid
   const handleRedeemLoan = async (loanId) => {
     try {
-      const response = await http.post("/redeem-loan", {
+      await http.post("/redeem-loan", {
         loanId,
         redeemedByUserId: loggedInUser?.id,
         redeemedByUsername: loggedInUser?.username
@@ -167,17 +187,26 @@ const SearchLoanForm = ({ loggedInUser }) => {
             />
           </div>
           <div className="form-group">
-            <label>Phone Number</label>
+            <label>Home Phone</label>
             <input
               type="text"
-              placeholder="Search by phone"
-              value={customerNumber}
-              onChange={(e) => setCustomerNumber(e.target.value)}
+              placeholder="Search by home phone"
+              value={homePhone}
+              onChange={(e) => setHomePhone(e.target.value)}
             />
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="form-group">
+            <label>Mobile Phone</label>
+            <input
+              type="text"
+              placeholder="Search by mobile phone"
+              value={mobilePhone}
+              onChange={(e) => setMobilePhone(e.target.value)}
+            />
+          </div>
           <div className="form-group">
             <label>Email Address</label>
             <input
@@ -187,6 +216,9 @@ const SearchLoanForm = ({ loggedInUser }) => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           <div className="form-group">
             <label>Transaction Number</label>
             <input
@@ -244,16 +276,22 @@ const SearchLoanForm = ({ loggedInUser }) => {
                   <strong>Created by:</strong>
                   {
                     ' ' + (
-                      loan.created_by_username || loan.createdByUsername ||
+                      loan.created_by_username || 
+                      loan.createdByUsername ||
                       (loan.created_by && (loan.created_by.username || loan.created_by.name)) ||
-                      loan.created_by || loan.createdBy || ''
+                      loan.created_by || 
+                      loan.createdBy || 
+                      'Unknown'
                     )
                   }
                   {' '}
                   (ID: {
-                    loan.created_by_user_id || loan.createdByUserId ||
+                    loan.created_by_user_id || 
+                    loan.createdByUserId ||
                     (loan.created_by && (loan.created_by.id || loan.created_by.user_id)) ||
-                    loan.created_by_user || loan.creator_id || ''
+                    loan.created_by_user || 
+                    loan.creator_id || 
+                    'N/A'
                   })
                 </p>
               </div>
@@ -271,6 +309,31 @@ const SearchLoanForm = ({ loggedInUser }) => {
 
               <div style={{ marginBottom: '15px' }}>
                 <p><strong>Status:</strong> <span className={`badge badge-${loan.status === 'active' ? 'success' : loan.status === 'overdue' ? 'danger' : 'info'}`}>{loan.status}</span></p>
+              </div>
+
+              {/* Collateral Details */}
+              <div style={{ backgroundColor: '#fff3cd', padding: '15px', borderRadius: '8px', marginBottom: '15px', borderLeft: '4px solid #ffc107' }}>
+                <h5 style={{ marginTop: 0, marginBottom: '10px', color: '#856404' }}>📦 Collateral Information</h5>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div>
+                    <p><strong>Item:</strong> {loan.item_description || loan.itemDescription || loan.collateral_description || loan.collateralDescription || 'N/A'}</p>
+                    <p><strong>Category:</strong> {loan.item_category || loan.itemCategory || 'N/A'}</p>
+                  </div>
+                  <div>
+                    {(loan.collateral_image || loan.collateralImage) && (
+                      <div style={{ textAlign: 'center' }}>
+                        <img 
+                          src={loan.collateral_image || loan.collateralImage} 
+                          alt="Collateral Item" 
+                          style={{ maxWidth: '100%', maxHeight: '250px', borderRadius: '6px', border: '2px solid #ffc107' }} 
+                        />
+                      </div>
+                    )}
+                    {!(loan.collateral_image || loan.collateralImage) && (
+                      <p style={{ color: '#999', fontStyle: 'italic' }}>No image provided</p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Redeem or Add Money buttons */}

@@ -1,0 +1,391 @@
+.pdf-settings-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-settings-header {
+  margin-bottom: 30px;
+  text-align: center;
+  border-bottom: 2px solid #2980bd;
+  padding-bottom: 15px;
+}
+
+.pdf-settings-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 28px;
+}
+
+.pdf-settings-header p {
+  margin: 10px 0 0 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.message {
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tabs */
+.settings-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ecf0f1;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  border: none;
+  background: none;
+  color: #7f8c8d;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  margin-bottom: -2px;
+}
+
+.tab-button:hover {
+  color: #2980bd;
+  background-color: #f0f0f0;
+}
+
+.tab-button.active {
+  color: #2980bd;
+  border-bottom-color: #2980bd;
+}
+
+/* Tab Content */
+.settings-content {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.tab-content h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 22px;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 10px;
+}
+
+.tab-content > p {
+  color: #7f8c8d;
+  margin-bottom: 20px;
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #2980bd;
+  box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: 'Courier New', monospace;
+}
+
+.form-group small {
+  color: #95a5a6;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* Preview Sections */
+.preview-section {
+  background: #ecf0f1;
+  padding: 20px;
+  border-radius: 6px;
+  border-left: 4px solid #2980bd;
+  margin-top: 20px;
+}
+
+.preview-section h4 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pdf-preview-header {
+  background: white;
+  padding: 20px;
+  border-radius: 4px;
+  text-align: center;
+  border: 1px solid #bdc3c7;
+}
+
+.preview-company {
+  font-weight: 700;
+  font-size: 14px;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.preview-address {
+  font-size: 11px;
+  color: #34495e;
+  margin: 2px 0;
+}
+
+.preview-phone {
+  font-size: 11px;
+  color: #34495e;
+  margin-top: 8px;
+}
+
+.pdf-preview-legal {
+  background: white;
+  padding: 20px;
+  border-radius: 4px;
+  border: 1px solid #bdc3c7;
+  line-height: 1.6;
+}
+
+.legal-preview {
+  font-size: 11px;
+  color: #34495e;
+  margin: 0 0 10px 0;
+  text-align: justify;
+}
+
+.legal-preview:last-child {
+  margin-bottom: 0;
+}
+
+.pdf-preview-format {
+  background: white;
+  padding: 20px;
+  border-radius: 4px;
+  border: 1px solid #bdc3c7;
+}
+
+.format-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #ecf0f1;
+  font-size: 13px;
+}
+
+.format-row:last-child {
+  border-bottom: none;
+}
+
+.format-row span {
+  color: #7f8c8d;
+}
+
+.format-row strong {
+  color: #2c3e50;
+  font-family: 'Courier New', monospace;
+}
+
+.format-row.footer-code strong {
+  color: #2980bd;
+}
+
+/* Actions */
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background-color: #2980bd;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2471a3;
+  box-shadow: 0 2px 8px rgba(41, 128, 185, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #7f8c8d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+/* Info Section */
+.info-section {
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 6px;
+  padding: 20px;
+  border-left: 4px solid #2980bd;
+}
+
+.info-section h4 {
+  margin-top: 0;
+  color: #1565c0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.info-section ul {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+  color: #424242;
+  font-size: 13px;
+}
+
+.info-section li {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #7f8c8d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pdf-settings-container {
+    padding: 15px;
+  }
+
+  .settings-tabs {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    width: 100%;
+    text-align: left;
+    border-bottom: 3px solid transparent;
+    border-left: 4px solid transparent;
+  }
+
+  .tab-button.active {
+    border-left-color: #2980bd;
+    border-bottom-color: transparent;
+  }
+
+  .settings-content {
+    padding: 20px;
+  }
+
+  .settings-actions {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .format-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .form-group textarea {
+    min-height: 100px;
+  }
+}

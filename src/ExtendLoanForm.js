@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { http } from './services/httpClient';
+import { parseError, getErrorMessage } from './services/errorHandler';
+import logger from './services/logger';
 
 const ExtendLoanForm = ({ loggedInUser }) => {
   const [transactionNumber, setTransactionNumber] = useState('');
@@ -16,24 +18,27 @@ const ExtendLoanForm = ({ loggedInUser }) => {
     }
 
     try {
-      const response = await axios.get('http://localhost:5000/search-loan', {
-        params: { transactionNumber },
+      const response = await http.get('/search-loan', {
+        params: { transactionNumber, _ts: Date.now() },
       });
 
-      if (!response.data || response.data.length === 0) {
+      if (!response || response.length === 0) {
         setMessage('Loan not found');
         setMessageType('error');
         setLoan(null);
       } else {
-        setLoan(response.data[0]);
+        setLoan(response[0]);
         setMessage('');
         setMessageType('');
+        logger.debug('Loan found', { transactionNumber });
       }
     } catch (error) {
-      setMessage('Error searching for loan');
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(userMessage);
       setMessageType('error');
       setLoan(null);
-      console.error(error);
+      logger.error('Error searching for loan', parsedError);
     }
   };
 
@@ -46,19 +51,22 @@ const ExtendLoanForm = ({ loggedInUser }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/extend-loan', {
+      const response = await http.post('/extend-loan', {
         loanId: loan.id,
         extendedByUserId: loggedInUser?.id,
         extendedByUsername: loggedInUser?.username
       });
 
-      setMessage(response.data.message);
+      setMessage(response.message || 'Loan extended successfully!');
       setMessageType('success');
-      setLoan(response.data.loan);
+      setLoan(response.loan || loan);
+      logger.info('Loan extended successfully', { loanId: loan.id });
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error extending loan');
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(userMessage);
       setMessageType('error');
-      console.error(error);
+      logger.error('Error extending loan', parsedError);
     }
   };
 
@@ -118,7 +126,7 @@ const ExtendLoanForm = ({ loggedInUser }) => {
           <div style={{ marginTop: '20px' }}>
             <p><strong>Status:</strong> <span className={`badge badge-${loan.status === 'active' ? 'success' : 'danger'}`}>{loan.status}</span></p>
             <p><strong>Transaction Number:</strong> {loan.transaction_number}</p>
-            <p><strong>Collateral:</strong> {loan.collateral_description}</p>
+            <p><strong>Collateral:</strong> {loan.item_description || loan.itemDescription || loan.collateral_description || loan.collateralDescription || 'N/A'}</p>
           </div>
 
           {/* Extend Button - Only show if loan is active and due date has passed */}

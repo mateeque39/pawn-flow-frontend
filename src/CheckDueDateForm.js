@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { http } from './services/httpClient';
+import { parseError, getErrorMessage } from './services/errorHandler';
+import logger from './services/logger';
 
 const CheckDueDateForm = () => {
   const [message, setMessage] = useState('');
@@ -11,18 +13,21 @@ const CheckDueDateForm = () => {
   const handleCheckDueDate = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/check-due-date');
+      const response = await http.post('/check-due-date');
 
-      setMessage(response.data.message);
+      setMessage(response.message || 'Due dates checked successfully!');
       setMessageType('success');
       setCheckResults({
         timestamp: new Date().toLocaleString(),
         status: 'completed',
       });
+      logger.info('Due date check completed successfully');
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error checking due dates');
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(userMessage);
       setMessageType('error');
-      console.error(error);
+      logger.error('Error checking due dates', parsedError);
     } finally {
       setIsLoading(false);
     }

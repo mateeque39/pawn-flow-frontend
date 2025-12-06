@@ -81,4 +81,5 @@ class ApiConfig {
   }
 }
 
-export default new ApiConfig();
+const apiConfig = new ApiConfig();
+export default apiConfig;
