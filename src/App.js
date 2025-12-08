@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
 import logger from './services/logger';
 import RegisterForm from './RegisterForm';
 import LoginForm from './LoginForm';

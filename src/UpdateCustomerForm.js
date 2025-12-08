@@ -120,7 +120,7 @@ const UpdateCustomerForm = ({ loggedInUser }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await http.put(`/loans/${customerData.loanId}/customer-info`, {
+      await http.put(`/loans/${customerData.loanId}/customer-info`, {
         firstName: formData.firstName,
         lastName: formData.lastName,
         homePhone: formData.homePhone,
@@ -136,8 +136,6 @@ const UpdateCustomerForm = ({ loggedInUser }) => {
         updatedByUsername: loggedInUser?.username,
         updatedAt: new Date().toISOString()
       });
-
-      const result = response?.data || response;
 
       setMessage('✅ Customer information updated successfully!');
       setMessageType('success');

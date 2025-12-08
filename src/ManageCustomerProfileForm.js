@@ -253,21 +253,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
     }
   };
 
-  // Handle collateral image upload
-  const handleCollateralImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLoanFormData({
-          ...loanFormData,
-          collateralImage: reader.result, // Base64 string
-          collateralImagePreview: reader.result
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Handle collateral image upload (reserved for future image upload feature)
 
   // Handle collateral image capture from webcam or file
   const handleImageCapture = (imageData) => {

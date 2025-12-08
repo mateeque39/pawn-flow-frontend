@@ -17,11 +17,11 @@ const PDFSettingsForm = ({ loggedInUser }) => {
     itemDescriptionTemplate: 'Pawn Loan Agreement'
   });
 
-  const [savedSettings, setSavedSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('company');
+  const [savedSettings, setSavedSettings] = useState(null);
 
   // Load settings on component mount
   useEffect(() => {
