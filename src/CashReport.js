@@ -21,7 +21,14 @@ const CashReport = ({ loggedInUser }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Loan portfolio analytics state (reserved for future use)
+  // Loan portfolio analytics state (not currently used)
+  // const [portfolioData, setPortfolioData] = useState(null);
+  // const [portfolioLoading, setPortfolioLoading] = useState(false);
+  // const [portfolioMessage, setPortfolioMessage] = useState('');
+  // const [portfolioMessageType, setPortfolioMessageType] = useState('');
+  // const [portfolioDays, setPortfolioDays] = useState('7');
+  // const [portfolioStartDate, setPortfolioStartDate] = useState('');
+  // const [portfolioEndDate, setPortfolioEndDate] = useState('')
 
   // Balancing report state
   const [balancingData, setBalancingData] = useState(null);
@@ -95,8 +102,9 @@ const CashReport = ({ loggedInUser }) => {
     }
   };
 
-  // Auto-fetch reports on component mount
+  // Auto-fetch on date change
   useEffect(() => {
+    handleFetchReport();
     handleFetchTodaysLoans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -158,6 +166,64 @@ const CashReport = ({ loggedInUser }) => {
       setRevenueLoading(false);
     }
   };
+
+  // Handle loan portfolio analytics fetch (not currently used)
+  /* const handleFetchPortfolioReport = async () => {
+    setPortfolioLoading(true);
+    try {
+      let start, end;
+      
+      if (portfolioDays === 'custom') {
+        if (!portfolioStartDate || !portfolioEndDate) {
+          setPortfolioMessage('Please select both start and end dates');
+          setPortfolioMessageType('error');
+          setPortfolioLoading(false);
+          return;
+        }
+        start = portfolioStartDate;
+        end = portfolioEndDate;
+      } else {
+        const days = parseInt(portfolioDays, 10);
+        end = new Date().toISOString().split('T')[0];
+        const startDateObj = new Date();
+        startDateObj.setDate(startDateObj.getDate() - days);
+        start = startDateObj.toISOString().split('T')[0];
+      }
+
+      const response = await http.get('/loan-portfolio-report', {
+        params: { startDate: start, endDate: end, _ts: Date.now() }
+      });
+
+      const data = response?.data || response;
+      setPortfolioData({
+        ...data,
+        startDate: start,
+        endDate: end
+      });
+      setPortfolioMessage('');
+      setPortfolioMessageType('');
+      logger.info('Loan portfolio report fetched', { startDate: start, endDate: end });
+    } catch (error) {
+      const parsedError = error.parsedError || parseError(error);
+      
+      if (parsedError.status === 404) {
+        setPortfolioMessage(
+          '⚠️ Loan Portfolio Report endpoint not yet implemented on backend. ' +
+          'Please create a GET /loan-portfolio-report endpoint.'
+        );
+        setPortfolioMessageType('warning');
+      } else {
+        const userMessage = error.userMessage || getErrorMessage(parsedError);
+        setPortfolioMessage(userMessage);
+        setPortfolioMessageType('error');
+      }
+      
+      setPortfolioData(null);
+      logger.error('Error fetching loan portfolio report', parsedError);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }; */
 
   // Handle balancing report fetch
   const handleFetchBalancingReport = async () => {
@@ -316,7 +382,7 @@ const CashReport = ({ loggedInUser }) => {
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    // const pageHeight = doc.internal.pageSize.getHeight(); // Reserved for page break logic
+    // const pageHeight = doc.internal.pageSize.getHeight(); // Not used
     let yPosition = 15;
 
     // Title

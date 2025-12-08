@@ -19,8 +19,19 @@ class HttpError extends Error {
  */
 export function parseError(error) {
   const status = error?.response?.status || 0;
-  const responseData = error?.response?.data || {};
-  const message = responseData?.message || error?.message || 'An error occurred';
+  let responseData = error?.response?.data || {};
+  let message = error?.message || 'An error occurred';
+
+  // Handle blob responses (e.g., from PDF download endpoints with errors)
+  if (responseData instanceof Blob) {
+    // For blob, we can't extract the message synchronously
+    // Just indicate it's a blob error
+    message = `Server error (HTTP ${status})`;
+  } else if (typeof responseData === 'object' && responseData !== null) {
+    message = responseData?.message || message;
+  } else if (typeof responseData === 'string') {
+    message = responseData;
+  }
 
   return {
     status,

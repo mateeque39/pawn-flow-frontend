@@ -223,11 +223,54 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
       setTimeout(() => setMessage(''), 3000);
       logger.info('Receipt downloaded successfully', { loanId: loan.id });
     } catch (error) {
+      console.log('[RECEIPT_ERROR] Caught error:', { 
+        hasBlobError: error.isBlobError,
+        dataType: typeof error.response?.data,
+        isBlob: error.response?.data instanceof Blob,
+        status: error.response?.status
+      });
+      
+      logger.error('Download receipt - caught error:', error);
+      
+      // If this is a blob error from the httpClient interceptor
+      if (error.isBlobError && error.response?.data instanceof Blob) {
+        console.log('[RECEIPT_ERROR] Processing blob error...');
+        const blob = error.response.data;
+        console.log('[RECEIPT_ERROR] Blob size:', blob.size, 'bytes');
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const text = reader.result;
+            console.log('[RECEIPT_ERROR] Blob text:', text);
+            const errorData = JSON.parse(text);
+            const msg = errorData.message || errorData.error || 'Unknown error';
+            console.log('[RECEIPT_ERROR] Parsed message:', msg);
+            setMessage(`Error downloading receipt: ${msg}`);
+            setMessageType('error');
+          } catch (parseErr) {
+            console.log('[RECEIPT_ERROR] Parse failed:', parseErr);
+            setMessage(`Error downloading receipt: ${reader.result || 'Unknown error'}`);
+            setMessageType('error');
+          }
+        };
+        reader.onerror = () => {
+          console.log('[RECEIPT_ERROR] FileReader error');
+          setMessage('Error downloading receipt: Unable to read response');
+          setMessageType('error');
+        };
+        console.log('[RECEIPT_ERROR] Starting FileReader...');
+        reader.readAsText(blob);
+        return;
+      }
+      
+      // Standard error handling
       const parsedError = error.parsedError || parseError(error);
       const userMessage = error.userMessage || getErrorMessage(parsedError);
+      console.log('[RECEIPT_ERROR] Standard error - message:', userMessage);
       setMessage(`Error downloading receipt: ${userMessage}`);
       setMessageType('error');
-      logger.error('Error downloading receipt', parsedError);
+      logger.error('Error downloading receipt', { status: parsedError.status, message: parsedError.message });
     }
   };
 

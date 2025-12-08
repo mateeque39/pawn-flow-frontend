@@ -1,61 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { http } from './services/httpClient';
 import logger from './services/logger';
 import { getErrorMessage } from './services/errorHandler';
 
-const RegisterForm = ({ onRegisterSuccess }) => {
+const RegisterForm = ({ onRegisterSuccess, onSwitchToLogin }) => {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('user'); // Default role is 'user'
   const [message, setMessage] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // Check if current user is an admin on component mount
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        const currentUser = await http.get('/api/users/current');
-        setIsAdmin(currentUser.role === 'admin');
-      } catch (err) {
-        logger.debug('User not authenticated or error checking admin status');
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkAdminStatus();
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Security check: Only admins can register new users
-    if (!isAdmin) {
-      setMessage('Only administrators can register new users');
-      logger.warn('Unauthorized registration attempt by non-admin user');
-      return;
-    }
+    setMessage('');
+    setLoading(true);
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      setMessage('Passwords do not match');
+      setMessage('❌ Passwords do not match');
+      setLoading(false);
       return;
     }
 
     // Validate password length
     if (password.length < 6) {
-      setMessage('Password must be at least 6 characters long');
+      setMessage('❌ Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    // Validate username length
+    if (username.length < 3) {
+      setMessage('❌ Username must be at least 3 characters long');
+      setLoading(false);
       return;
     }
 
     try {
-      logger.debug('Registering user:', { username, email, role });
-      await http.post('/register', { username, email, password, role });
-      setMessage('User registered successfully! Redirecting to login...');
-      logger.info('User registered successfully', { username, email, role });
+      logger.debug('Registering user:', { username });
+      await http.post('/register', { username, password });
+      setMessage('✅ Account created successfully! Redirecting to login...');
+      logger.info('User registered successfully', { username });
       
       // Redirect to login after 2 seconds
       setTimeout(() => {
@@ -63,44 +48,27 @@ const RegisterForm = ({ onRegisterSuccess }) => {
       }, 2000);
     } catch (err) {
       const userMessage = err.userMessage || getErrorMessage(err.parsedError || {});
-      setMessage(`Error registering user: ${userMessage}`);
+      setMessage(`❌ Registration failed: ${userMessage}`);
       logger.error('Registration failed', err.parsedError || err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="form-container">
-      <h3>Create New Account</h3>
+      <h3>Create Your Account</h3>
       
-      {loading ? (
-        <div className="alert alert-info">
-          Verifying permissions...
-        </div>
-      ) : !isAdmin ? (
-        <div className="alert alert-error">
-          <strong>Access Denied:</strong> Only administrators can register new users. Please contact an admin to create new accounts.
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Username</label>
           <input
             type="text"
-            placeholder="Choose a username"
+            placeholder="Choose a username (min 3 characters)"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Email Address</label>
-          <input
-            type="email"
-            placeholder="Enter your email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+            disabled={loading}
           />
         </div>
 
@@ -112,6 +80,7 @@ const RegisterForm = ({ onRegisterSuccess }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
 
@@ -123,26 +92,36 @@ const RegisterForm = ({ onRegisterSuccess }) => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
 
-        <div className="form-group">
-          <label>Role</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)} required>
-            <option value="user">User</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-
-        <button type="submit" className="btn-success" style={{ width: '100%' }}>Register</button>
+        <button type="submit" className="btn-success" style={{ width: '100%' }} disabled={loading}>
+          {loading ? 'Creating Account...' : 'Register'}
+        </button>
       </form>
-      )}
+
       {message && (
-        <div className={`alert alert-${message.includes('successfully') ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>
+        <div className={`alert alert-${message.includes('✅') ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>
           {message}
         </div>
       )}
+
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <p>Already have an account? <button 
+          onClick={onSwitchToLogin}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: '#007bff', 
+            textDecoration: 'underline', 
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          Login here
+        </button></p>
+      </div>
     </div>
   );
 };

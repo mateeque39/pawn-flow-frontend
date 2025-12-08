@@ -6,9 +6,27 @@
 
 class ApiConfig {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    // Runtime detection: check if running on Railway by hostname
+    // This allows the same build to work in dev, staging, and production
+    let baseURL = process.env.REACT_APP_API_URL;
+    
+    // If no env var, detect at runtime based on hostname
+    if (!baseURL && typeof window !== 'undefined') {
+      if (window.location.hostname.includes('railway.app')) {
+        baseURL = 'https://pawn-flow-production.up.railway.app';
+      } else if (window.location.hostname.includes('localhost')) {
+        baseURL = 'http://localhost:5000';
+      }
+    }
+    
+    this.baseURL = baseURL || 'http://localhost:5000';
     this.timeout = parseInt(process.env.REACT_APP_API_TIMEOUT, 10) || 30000;
     this.env = process.env.REACT_APP_ENV || 'development';
+    
+    // Log configuration on initialization (for debugging)
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`[ApiConfig] Environment: ${this.env}, Base URL: ${this.baseURL}`);
+    }
   }
 
   /**

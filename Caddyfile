@@ -1,0 +1,26 @@
+:3000 {
+    # Enable gzip compression
+    encode gzip
+
+    # Serve static files from build directory
+    root * /app/build
+
+    # Enable file serving
+    file_server
+
+    # Rewrite all requests to index.html for React Router
+    # This ensures all routes are handled by React's client-side router
+    try_files {path} /index.html
+
+    # Set proper caching headers for static assets
+    @static {
+        path /static/*
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # Set shorter cache for index.html
+    @index {
+        file /index.html
+    }
+    header @index Cache-Control "public, max-age=0, must-revalidate"
+}

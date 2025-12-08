@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import logger from './services/logger';
+import { http } from './services/httpClient';
 import RegisterForm from './RegisterForm';
 import LoginForm from './LoginForm';
 import ShiftManagement from './ShiftManagement';
@@ -64,7 +65,32 @@ function App() {
   };
 
   // Handle Logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Validate user ID before making request
+      if (!loggedInUser?.user_id) {
+        logger.warn('Logout: No valid user_id found, proceeding with logout');
+        setLoggedInUser(null);
+        localStorage.removeItem('loggedInUser');
+        return;
+      }
+
+      // Check if user has an active shift
+      const response = await http.get(`/current-shift/${loggedInUser.user_id}`);
+      const activeShift = response?.data;
+      
+      if (activeShift && activeShift.shift_end_time === null) {
+        // User has an active shift
+        alert('You cannot logout before closing your shift. Please end your shift first.');
+        logger.warn('Logout blocked - user has active shift', { userId: loggedInUser.user_id });
+        return;
+      }
+    } catch (error) {
+      // If we get 404 or other errors, it means no active shift (which is good)
+      logger.debug('No active shift found, proceeding with logout');
+    }
+    
+    // No active shift, proceed with logout
     setLoggedInUser(null); // Clear logged-in user state
     setIsLogin(true); // Redirect back to login
     setIsRegister(false); // Hide register form
@@ -96,22 +122,28 @@ function App() {
       <div className="container">
         {isRegister ? (
           <div className="form-container">
-            <h2>Register New User</h2>
-            <RegisterForm loggedInUser={loggedInUser} onRegisterSuccess={() => setIsRegister(false)} />
-            <p style={{ textAlign: 'center', marginTop: '20px' }}>
-              <button onClick={() => setIsRegister(false)} style={{ background: 'none', border: 'none', color: '#667eea', cursor: 'pointer', textDecoration: 'underline' }}>Back to Login</button>
-            </p>
+            <h2>Create New Account</h2>
+            <RegisterForm 
+              onRegisterSuccess={() => {
+                setIsRegister(false);
+                setIsLogin(true);
+              }}
+              onSwitchToLogin={() => {
+                setIsRegister(false);
+                setIsLogin(true);
+              }}
+            />
           </div>
         ) : isLogin ? (
           <div className="form-container">
             <h2>Login</h2>
-            <LoginForm onLoginSuccess={handleLoginSuccess} />
-            <p style={{ textAlign: 'center', marginTop: '20px' }}>
-              Don't have an account? <button onClick={() => {
-                // Only allow registration if user is already logged in as admin
-                logger.warn('Registration page only accessible from dashboard by admins');
-              }} style={{ background: 'none', border: 'none', color: '#667eea', cursor: 'pointer', textDecoration: 'underline' }}>Contact your administrator</button>
-            </p>
+            <LoginForm 
+              onLoginSuccess={handleLoginSuccess}
+              onSwitchToRegister={() => {
+                setIsLogin(false);
+                setIsRegister(true);
+              }}
+            />
           </div>
         ) : (
           <div>
@@ -135,7 +167,7 @@ function App() {
               {selectedOption === 'manage-profile' && <ManageCustomerProfileForm loggedInUser={loggedInUser} />}
               {selectedOption === 'edit-loan' && <UpdateCustomerForm loggedInUser={loggedInUser} />}
               {selectedOption === 'pdf-settings' && <PDFSettingsForm loggedInUser={loggedInUser} />}
-              {selectedOption === 'shift-management' && <ShiftManagement />}
+              {selectedOption === 'shift-management' && <ShiftManagement userId={loggedInUser?.id} />}
               {selectedOption === 'cash-report' && <CashReport loggedInUser={loggedInUser} />}
               {selectedOption === 'register-user' && loggedInUser.role === 'admin' && (
                 <div className="form-container">

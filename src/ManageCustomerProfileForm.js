@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { jsPDF } from 'jspdf';
 import { http } from './services/httpClient';
+import apiConfig from './config/apiConfig';
 import { parseError, getErrorMessage } from './services/errorHandler';
 import logger from './services/logger';
 import CollateralImageCapture from './CollateralImageCapture';
@@ -253,7 +253,21 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
     }
   };
 
-  // Handle collateral image upload (reserved for future image upload feature)
+  // Handle collateral image upload (not currently used)
+  /* const handleCollateralImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLoanFormData({
+          ...loanFormData,
+          collateralImage: reader.result, // Base64 string
+          collateralImagePreview: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }; */
 
   // Handle collateral image capture from webcam or file
   const handleImageCapture = (imageData) => {
@@ -339,11 +353,54 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
       setTimeout(() => setMessage(''), 3000);
       logger.info('Receipt downloaded successfully', { loanId: loan.id });
     } catch (error) {
+      console.log('[RECEIPT_ERROR] Caught error:', { 
+        hasBlobError: error.isBlobError,
+        dataType: typeof error.response?.data,
+        isBlob: error.response?.data instanceof Blob,
+        status: error.response?.status
+      });
+      
+      logger.error('Download receipt - caught error:', error);
+      
+      // If this is a blob error from the httpClient interceptor
+      if (error.isBlobError && error.response?.data instanceof Blob) {
+        console.log('[RECEIPT_ERROR] Processing blob error...');
+        const blob = error.response.data;
+        console.log('[RECEIPT_ERROR] Blob size:', blob.size, 'bytes');
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const text = reader.result;
+            console.log('[RECEIPT_ERROR] Blob text:', text);
+            const errorData = JSON.parse(text);
+            const msg = errorData.message || errorData.error || 'Unknown error';
+            console.log('[RECEIPT_ERROR] Parsed message:', msg);
+            setMessage(`Error downloading receipt: ${msg}`);
+            setMessageType('error');
+          } catch (parseErr) {
+            console.log('[RECEIPT_ERROR] Parse failed:', parseErr);
+            setMessage(`Error downloading receipt: ${reader.result || 'Unknown error'}`);
+            setMessageType('error');
+          }
+        };
+        reader.onerror = () => {
+          console.log('[RECEIPT_ERROR] FileReader error');
+          setMessage('Error downloading receipt: Unable to read response');
+          setMessageType('error');
+        };
+        console.log('[RECEIPT_ERROR] Starting FileReader...');
+        reader.readAsText(blob);
+        return;
+      }
+      
+      // Standard error handling
       const parsedError = error.parsedError || parseError(error);
       const userMessage = error.userMessage || getErrorMessage(parsedError);
+      console.log('[RECEIPT_ERROR] Standard error - message:', userMessage);
       setMessage(`Error downloading receipt: ${userMessage}`);
       setMessageType('error');
-      logger.error('Error downloading receipt', parsedError);
+      logger.error('Error downloading receipt', { status: parsedError.status, message: parsedError.message });
     }
   };
 
@@ -527,9 +584,9 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
 
       logger.info(`Loan ${operationType} completed`, { loanId: selectedLoan?.id || 'new' });
 
-      // Generate PDF if creating loan
-      if (operationType === 'create') {
-        setTimeout(() => generateLoanPDF(result), 500);
+      // Download PDF if creating loan
+      if (operationType === 'create' && result.pdf_url) {
+        setTimeout(() => downloadLoanPDF(result.loan.id), 500);
       }
     } catch (error) {
       const parsedError = error.parsedError || parseError(error);
@@ -542,156 +599,43 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
     }
   };
 
-  const generateLoanPDF = (loan) => {
-    console.log('PDF Generation - Received loan data:', JSON.stringify(loan, null, 2));
-    
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 12;
-    const contentWidth = pageWidth - 2 * margin;
-    let yPosition = margin;
+  const downloadLoanPDF = async (loanId) => {
+    try {
+      console.log(`[PDF Download] Starting download for loan: ${loanId}`);
+      const token = localStorage.getItem('token');
+      const baseURL = apiConfig.getBaseURL();
+      
+      const response = await fetch(`${baseURL}/loan-pdf/${loanId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-    // Top centered company header
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text('GREEN MOOLAA BRAMPTON', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 5;
-
-    doc.setFontSize(10);
-    doc.text('263 QUEEN ST. E. UNIT 4', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 4;
-    doc.text('BRAMPTON ON L6W 4K6', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 4;
-    doc.text('(905) 796-7777', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 6;
-
-    // Dividing line
-    doc.setDrawColor(0, 0, 0);
-    doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 5;
-
-    // Extract data with correct backend field names
-    const loanId = loan?.id || 'N/A';
-    const transNum = loan?.transaction_number || 'N/A';
-    const amount = parseFloat(loan?.loan_amount || 0);
-    
-    let formattedDueDate = loan?.due_date || 'N/A';
-    if (formattedDueDate && formattedDueDate !== 'N/A') {
-      try {
-        const dateObj = new Date(formattedDueDate);
-        formattedDueDate = dateObj.toLocaleDateString();
-      } catch (e) {
-        // Keep original
+      if (!response.ok) {
+        throw new Error(`Failed to download PDF: ${response.statusText}`);
       }
+
+      // Get blob from response
+      const blob = await response.blob();
+      console.log(`[PDF Download] Downloaded PDF size: ${blob.size} bytes`);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `loan_${loanId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log(`[PDF Download] PDF downloaded successfully for loan ${loanId}`);
+    } catch (error) {
+      console.error(`[PDF Download Error]`, error);
+      setMessage(`Error downloading PDF: ${error.message}`);
+      setMessageType('error');
     }
-
-    // Customer info on left, barcode placeholder on right
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'bold');
-    doc.text('[CUSTOMER]', margin, yPosition);
-    
-    // Transaction on right
-    doc.setFontSize(8);
-    doc.text(`Transaction: ${transNum}`, pageWidth - margin - 40, yPosition);
-    yPosition += 5;
-
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Loan ID: ${loanId}`, margin, yPosition);
-    yPosition += 4;
-    doc.setFontSize(8);
-    doc.text(`Loan Amount: $${parseFloat(amount).toFixed(2)}`, margin, yPosition);
-    yPosition += 4;
-    doc.text(`Due Date: ${formattedDueDate}`, margin, yPosition);
-    yPosition += 6;
-
-    // Table header with proper column alignment
-    const tableTop = yPosition;
-    const colWidths = {
-      item: 20,
-      category: 30,
-      description: 75,
-      amount: 35
-    };
-
-    // Calculate column positions
-    const col1Start = margin;
-    const col2Start = col1Start + colWidths.item;
-    const col3Start = col2Start + colWidths.category;
-    const col4Start = col3Start + colWidths.description;
-
-    // Header background
-    doc.setFillColor(200, 200, 200);
-    doc.rect(margin, tableTop, contentWidth, 7, 'F');
-
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(9);
-    doc.text('ITEM', col1Start + 2, tableTop + 5);
-    doc.text('CATEGORY', col2Start + 2, tableTop + 5);
-    doc.text('DESCRIPTION', col3Start + 2, tableTop + 5);
-    doc.text('AMOUNT', col4Start + 2, tableTop + 5, { align: 'right' });
-
-    // Table borders
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    
-    // Outer border
-    doc.rect(margin, tableTop, contentWidth, 7);
-    
-    // Column dividers
-    doc.line(col2Start, tableTop, col2Start, tableTop + 7);
-    doc.line(col3Start, tableTop, col3Start, tableTop + 7);
-    doc.line(col4Start, tableTop, col4Start, tableTop + 7);
-
-    yPosition = tableTop + 8;
-    // Table content row - using extracted loan data
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
-    
-    const itemNum = 'LN-' + loanId;
-    const tableCategory = 'Loan';
-    const tableDescription = 'Pawn Loan Agreement';
-    const tableAmount = `$${amount.toFixed(2)}`;
-    
-    doc.text(itemNum, col1Start + 2, yPosition);
-    doc.text(tableCategory, col2Start + 2, yPosition);
-    doc.text(tableDescription, col3Start + 2, yPosition);
-    doc.text(tableAmount, col4Start + 30, yPosition, { align: 'right' });
-
-    yPosition += 8;
-
-    // Charges/Due info row
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
-    doc.text('CHARGES ON THIS ACCOUNT ARE DUE ON OR BEFORE', margin + colWidths.item + colWidths.category + 5, yPosition);
-    doc.text(formattedDueDate, pageWidth - margin - 40, yPosition);
-    yPosition += 6;
-
-    // Totals
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(9);
-    doc.text('TOTAL', margin + colWidths.item + colWidths.category + 5, yPosition);
-    doc.text(`$${amount.toFixed(2)}`, pageWidth - margin - 40, yPosition);
-    yPosition += 8;
-
-    // Legal text
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(7);
-    const legalText = doc.splitTextToSize(
-      `I, the undersigned (herein 'the seller'), do hereby loan the item(s) above amount, the receipt of which is acknowledge by the undersigned (herein 'the Seller'), said Seller does sell, transfer, and assign all rights, title and interest in the described property to GRN. The seller declares that the above is their own personal property free and clear of all claims and liens whatsoever and that they have the full power to sell, transfer and deliver said property as provided herein.`,
-      contentWidth - 4
-    );
-    doc.text(legalText, margin + 2, yPosition);
-    yPosition += legalText.length * 3 + 3;
-
-    // Bottom divider line
-    doc.setDrawColor(0, 0, 0);
-    doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10);
-    doc.setFontSize(7);
-    doc.text('Pawn-GR-02-CAN', pageWidth - margin - 30, pageHeight - 5);
-
-    doc.save(`loan-${loan.id}.pdf`);
   };
 
   const getStatusColor = (status) => {

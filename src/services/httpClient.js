@@ -70,6 +70,13 @@ axiosInstance.interceptors.response.use(
       );
     }
 
+    // Special handling for blob responses (e.g., PDF endpoints with errors)
+    if (error.response?.data instanceof Blob) {
+      console.log('[HTTP_CLIENT] Blob error detected, size:', error.response.data.size);
+      // Keep the blob as-is for the component to handle with FileReader
+      error.isBlobError = true;
+    }
+
     const parsedError = parseError(error);
     
     // Log with just the key error info to avoid [Object] in console
@@ -78,7 +85,8 @@ axiosInstance.interceptors.response.use(
       message: parsedError.message,
       isNetworkError: parsedError.isNetworkError,
       isTimeout: parsedError.isTimeout,
-      isServerError: parsedError.isServerError
+      isServerError: parsedError.isServerError,
+      isBlobError: error.isBlobError
     });
 
     // Enrich error with user-friendly message

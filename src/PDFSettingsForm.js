@@ -17,6 +17,7 @@ const PDFSettingsForm = ({ loggedInUser }) => {
     itemDescriptionTemplate: 'Pawn Loan Agreement'
   });
 
+  // const [savedSettings, setSavedSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -34,11 +35,13 @@ const PDFSettingsForm = ({ loggedInUser }) => {
       const response = await http.get('/admin/pdf-settings');
       if (response.data && response.data.settings) {
         setSettings(response.data.settings);
+        // setSavedSettings(response.data.settings); // Not used
         logger.info('PDF settings loaded', { settings: response.data.settings });
       }
     } catch (error) {
       // If endpoint doesn't exist yet, use defaults
       logger.warn('Could not load PDF settings, using defaults', { error: error.message });
+      // setSavedSettings(settings); // Not used
     } finally {
       setLoading(false);
     }
@@ -58,6 +61,7 @@ const PDFSettingsForm = ({ loggedInUser }) => {
       setSaving(true);
       const response = await http.post('/admin/pdf-settings', { settings });
       if (response.data && response.data.success) {
+        // setSavedSettings(settings); // Not used
         setMessage('✅ PDF settings saved successfully!');
         logger.info('PDF settings saved', { settings });
         setTimeout(() => setMessage(''), 3000);

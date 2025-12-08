@@ -73,7 +73,8 @@ const CreateCustomerProfileForm = ({ loggedInUser }) => {
       };
 
       const response = await http.post('/customers', payload);
-      const customer = response?.data || response;
+      // The backend returns { message: '...', customer: {...} }
+      const customer = response?.data?.customer || response?.data || response;
 
       // Normalize customer profile with field fallbacks
       const getFieldValue = (obj, ...keys) => {
@@ -116,8 +117,8 @@ const CreateCustomerProfileForm = ({ loggedInUser }) => {
       });
 
       logger.info('Customer profile created', { 
-        customerId: customer.id, 
-        name: `${customer.firstName} ${customer.lastName}`,
+        customerId: normalizedCustomer.id, 
+        name: `${normalizedCustomer.firstName} ${normalizedCustomer.lastName}`,
         createdBy: loggedInUser?.username 
       });
     } catch (error) {

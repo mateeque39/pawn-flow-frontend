@@ -3,7 +3,7 @@ import { http } from './services/httpClient';
 import logger from './services/logger';
 import { getErrorMessage } from './services/errorHandler';
 
-const LoginForm = ({ onLoginSuccess }) => {
+const LoginForm = ({ onLoginSuccess, onSwitchToRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -26,7 +26,7 @@ const LoginForm = ({ onLoginSuccess }) => {
       setMessage('Login successful!');
     } catch (err) {
       const userMessage = err.userMessage || getErrorMessage(err.parsedError || {});
-      setMessage(`Login failed: ${userMessage}`);
+      setMessage(`❌ Login failed: ${userMessage}`);
       logger.error('Login failed', err.parsedError || err);
     }
   };
@@ -58,13 +58,25 @@ const LoginForm = ({ onLoginSuccess }) => {
         <button type="submit" className="btn-primary" style={{ width: '100%' }}>Login</button>
       </form>
       {message && (
-        <div className={`alert alert-${message.includes('successful') ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>
+        <div className={`alert alert-${message.includes('✅') ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>
           {message}
         </div>
       )}
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
-        <p>Don't have an account? <a href="/register">Register here</a></p>
+        <p>Don't have an account? <button 
+          onClick={onSwitchToRegister}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: '#007bff', 
+            textDecoration: 'underline', 
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          Register here
+        </button></p>
       </div>
     </div>
   );

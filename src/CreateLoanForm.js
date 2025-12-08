@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { jsPDF } from 'jspdf';
 import { http } from './services/httpClient';
 import logger from './services/logger';
 import { getErrorMessage } from './services/errorHandler';
@@ -132,18 +131,59 @@ const CreateLoanForm = ({ loggedInUser }) => {
         logger.debug('Stored creator info in localStorage for transaction:', transactionId);
       }
 
-      // Generate PDF after loan creation
+      // Download PDF from backend after loan creation
       if (response.data.loan) {
-        generatePDF(response.data.loan);
+        await downloadPDFReceipt(response.data.loan.id);
       }
     } catch (error) {
       const userMessage = error.userMessage || getErrorMessage(error.parsedError || {});
-      setMessage(`Error creating loan: ${userMessage}`);
-      logger.error('Failed to create loan', error.parsedError || error);
+      
+      // Check if error is NO_ACTIVE_SHIFT
+      if (error.parsedError?.data?.code === 'NO_ACTIVE_SHIFT') {
+        setMessage('⚠️ You must start a shift before creating a loan. Please go to Shift Management and start a new shift.');
+        logger.warn('Loan creation blocked - No active shift', { userId: loggedInUser?.id });
+      } else {
+        setMessage(`Error creating loan: ${userMessage}`);
+        logger.error('Failed to create loan', error.parsedError || error);
+      }
     }
   };
 
-  // Generate PDF with loan details
+  // Download PDF receipt from backend endpoint
+  const downloadPDFReceipt = async (loanId) => {
+    try {
+      logger.info('[PDF Download] Starting download for loan:', loanId);
+      console.log('[PDF Download] Starting download for loan:', loanId);
+      
+      const response = await http.get(`/api/loans/${loanId}/receipt`, {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/pdf'
+        }
+      });
+
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `loan_${loanId}_receipt.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      logger.info('[PDF Download] Receipt downloaded successfully for loan:', loanId);
+      console.log('[PDF Download] Receipt downloaded successfully for loan:', loanId);
+    } catch (error) {
+      logger.error('[PDF Download Error] Error downloading PDF:', error);
+      console.error('[PDF Download Error] Error:', error.message || error);
+      // Don't fail the entire loan creation just because PDF download failed
+      setMessage('Loan created successfully, but PDF download failed. You can download it later from the loans list.');
+    }
+  };
+
+  // Generate PDF with loan details (kept for reference, not used)
   const generatePDF = (loanData) => {
     console.log('=== PDF GENERATION DEBUG ===');
     console.log('Full loanData object:', loanData);
