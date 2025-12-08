@@ -98,6 +98,7 @@ const CashReport = ({ loggedInUser }) => {
   // Auto-fetch reports on component mount
   useEffect(() => {
     handleFetchTodaysLoans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle revenue report fetch

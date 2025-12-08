@@ -21,11 +21,11 @@ const PDFSettingsForm = ({ loggedInUser }) => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('company');
-  const [savedSettings, setSavedSettings] = useState(null);
 
   // Load settings on component mount
   useEffect(() => {
     loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadSettings = async () => {
@@ -34,13 +34,11 @@ const PDFSettingsForm = ({ loggedInUser }) => {
       const response = await http.get('/admin/pdf-settings');
       if (response.data && response.data.settings) {
         setSettings(response.data.settings);
-        setSavedSettings(response.data.settings);
         logger.info('PDF settings loaded', { settings: response.data.settings });
       }
     } catch (error) {
       // If endpoint doesn't exist yet, use defaults
       logger.warn('Could not load PDF settings, using defaults', { error: error.message });
-      setSavedSettings(settings);
     } finally {
       setLoading(false);
     }
@@ -60,7 +58,6 @@ const PDFSettingsForm = ({ loggedInUser }) => {
       setSaving(true);
       const response = await http.post('/admin/pdf-settings', { settings });
       if (response.data && response.data.success) {
-        setSavedSettings(settings);
         setMessage('✅ PDF settings saved successfully!');
         logger.info('PDF settings saved', { settings });
         setTimeout(() => setMessage(''), 3000);

@@ -99,7 +99,7 @@ function App() {
             <h2>Register New User</h2>
             <RegisterForm loggedInUser={loggedInUser} onRegisterSuccess={() => setIsRegister(false)} />
             <p style={{ textAlign: 'center', marginTop: '20px' }}>
-              <a href="#" onClick={() => setIsRegister(false)}>Back to Login</a>
+              <button onClick={() => setIsRegister(false)} style={{ background: 'none', border: 'none', color: '#667eea', cursor: 'pointer', textDecoration: 'underline' }}>Back to Login</button>
             </p>
           </div>
         ) : isLogin ? (
@@ -107,10 +107,10 @@ function App() {
             <h2>Login</h2>
             <LoginForm onLoginSuccess={handleLoginSuccess} />
             <p style={{ textAlign: 'center', marginTop: '20px' }}>
-              Don't have an account? <a href="#" onClick={() => {
+              Don't have an account? <button onClick={() => {
                 // Only allow registration if user is already logged in as admin
                 logger.warn('Registration page only accessible from dashboard by admins');
-              }}>Contact your administrator</a>
+              }} style={{ background: 'none', border: 'none', color: '#667eea', cursor: 'pointer', textDecoration: 'underline' }}>Contact your administrator</button>
             </p>
           </div>
         ) : (

@@ -20,6 +20,7 @@ const ShiftManagement = ({ userId = 1 }) => {
   useEffect(() => {
     fetchCurrentShift();
     fetchShiftHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchCurrentShift = async () => {
