@@ -145,7 +145,7 @@ function App() {
               }}
             />
           </div>
-        ) : (
+        ) : loggedInUser ? (
           <div>
             <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Welcome to Dashboard, {loggedInUser.username}</h2>
             <div className="menu">
@@ -155,7 +155,7 @@ function App() {
               <button className="btn-warning" onClick={() => setSelectedOption('pdf-settings')}>📄 PDF Settings</button>
               <button className="btn-info" onClick={() => setSelectedOption('shift-management')}>Shift Management</button>
               <button className="btn-success" onClick={() => setSelectedOption('cash-report')}>💰 Cash Report</button>
-              {loggedInUser.role === 'admin' && (
+              {loggedInUser?.role === 'admin' && (
                 <button className="btn-warning" onClick={() => setSelectedOption('register-user')}>👥 Register User (Admin Only)</button>
               )}
               <button className="btn-danger" onClick={handleLogout}>Logout</button>
@@ -169,13 +169,25 @@ function App() {
               {selectedOption === 'pdf-settings' && <PDFSettingsForm loggedInUser={loggedInUser} />}
               {selectedOption === 'shift-management' && <ShiftManagement userId={loggedInUser?.id} />}
               {selectedOption === 'cash-report' && <CashReport loggedInUser={loggedInUser} />}
-              {selectedOption === 'register-user' && loggedInUser.role === 'admin' && (
+              {selectedOption === 'register-user' && loggedInUser?.role === 'admin' && (
                 <div className="form-container">
                   <h3>Register New User (Admin Only)</h3>
                   <RegisterForm loggedInUser={loggedInUser} onRegisterSuccess={() => setSelectedOption('')} />
                 </div>
               )}
             </ErrorBoundary>
+          </div>
+        ) : (
+          <div className="form-container">
+            <h2>Session Expired</h2>
+            <p>Please log in again to continue.</p>
+            <LoginForm 
+              onLoginSuccess={handleLoginSuccess}
+              onSwitchToRegister={() => {
+                setIsLogin(false);
+                setIsRegister(true);
+              }}
+            />
           </div>
         )}
       </div>
