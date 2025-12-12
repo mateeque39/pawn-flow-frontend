@@ -8,6 +8,8 @@ const ShiftManagement = ({ userId = 1 }) => {
   const [openingBalance, setOpeningBalance] = useState('');
   const [closingBalance, setClosingBalance] = useState('');
   const [notes, setNotes] = useState('');
+  const [cashToAdd, setCashToAdd] = useState('');
+  const [cashAddNotes, setCashAddNotes] = useState('');
   const [currentShift, setCurrentShift] = useState(null);
   const [shiftHistory, setShiftHistory] = useState([]);
   const [todaySummary, setTodaySummary] = useState(null);
@@ -216,6 +218,49 @@ const ShiftManagement = ({ userId = 1 }) => {
     }
   };
 
+  const handleAddCash = async () => {
+    if (!cashToAdd || parseFloat(cashToAdd) <= 0) {
+      setMessage('Please enter a valid amount to add');
+      setMessageType('error');
+      return;
+    }
+
+    if (!currentShift) {
+      setMessage('No active shift found. Please start a shift first.');
+      setMessageType('error');
+      return;
+    }
+
+    try {
+      const payload = {
+        userId,
+        amount: parseFloat(cashToAdd),
+        notes: cashAddNotes || 'Bank withdrawal'
+      };
+      logger.debug('Adding cash to shift with payload:', payload);
+      
+      const response = await http.post('/shift/add-cash', payload);
+      const responseData = response?.data || {};
+
+      setMessage(`✅ ${responseData.message || 'Cash added successfully!'} New opening balance: $${responseData.newOpeningBalance?.toFixed(2)}`);
+      setMessageType('success');
+      setCashToAdd('');
+      setCashAddNotes('');
+      
+      // Refresh shift data
+      fetchCurrentShift();
+      fetchTodaySummary();
+      
+      logger.info('Cash added to shift', { userId, amount: cashToAdd });
+    } catch (error) {
+      const parsedError = error.parsedError || parseError(error);
+      const userMessage = error.userMessage || getErrorMessage(parsedError);
+      setMessage(userMessage);
+      setMessageType('error');
+      logger.error('Error adding cash - Status: ' + parsedError.status + ', Message: ' + parsedError.message, parsedError);
+    }
+  };
+
   return (
     <div style={{ padding: '20px' }}>
       <h3>Shift Management</h3>
@@ -285,6 +330,7 @@ const ShiftManagement = ({ userId = 1 }) => {
           onClick={() => setActiveTab('shift-report')}
           style={{
             padding: '10px 20px',
+            marginRight: '5px',
             backgroundColor: activeTab === 'shift-report' ? '#007bff' : '#e9ecef',
             color: activeTab === 'shift-report' ? 'white' : 'black',
             border: 'none',
@@ -293,6 +339,19 @@ const ShiftManagement = ({ userId = 1 }) => {
           }}
         >
           Shift Report
+        </button>
+        <button
+          onClick={() => setActiveTab('add-cash')}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: activeTab === 'add-cash' ? '#007bff' : '#e9ecef',
+            color: activeTab === 'add-cash' ? 'white' : 'black',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+          }}
+        >
+          Add Cash
         </button>
       </div>
 
@@ -672,6 +731,87 @@ const ShiftManagement = ({ userId = 1 }) => {
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ADD CASH TAB */}
+      {activeTab === 'add-cash' && (
+        <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '4px' }}>
+          <h4>Add Cash to Shift</h4>
+
+          {!currentShift && (
+            <p style={{ color: 'orange' }}>
+              ⚠️ No active shift found. Please start a shift first.
+            </p>
+          )}
+
+          {currentShift && (
+            <div>
+              <div style={{ marginBottom: '10px', backgroundColor: '#f0f0f0', padding: '10px', borderRadius: '4px' }}>
+                <p>
+                  <strong>Shift Started:</strong>{' '}
+                  {new Date(currentShift.shift_start_time).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Opening Balance:</strong> ${' '}
+                  {parseFloat(currentShift.opening_balance).toFixed(2)}
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>
+                  <strong>Cash Amount to Add ($):</strong>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Enter amount"
+                  value={cashToAdd}
+                  onChange={(e) => setCashToAdd(e.target.value)}
+                  style={{
+                    padding: '8px',
+                    width: '100%',
+                    maxWidth: '300px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>
+                  <strong>Notes (Optional):</strong>
+                </label>
+                <textarea
+                  placeholder="e.g., Bank withdrawal, cash deposit, etc."
+                  value={cashAddNotes}
+                  onChange={(e) => setCashAddNotes(e.target.value)}
+                  style={{
+                    padding: '8px',
+                    width: '100%',
+                    maxWidth: '300px',
+                    boxSizing: 'border-box',
+                    minHeight: '80px',
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={handleAddCash}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Add Cash
+              </button>
             </div>
           )}
         </div>
