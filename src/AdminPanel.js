@@ -28,6 +28,8 @@ const AdminPanel = ({ onSwitchToLogin }) => {
   });
   const [changePasswordMessage, setChangePasswordMessage] = useState('');
   const [changePasswordMessageType, setChangePasswordMessageType] = useState('');
+  const [editingRoleId, setEditingRoleId] = useState(null);
+  const [editingRoleValue, setEditingRoleValue] = useState('');
 
   const handleAdminPasswordSubmit = async (e) => {
     e.preventDefault();
@@ -190,6 +192,26 @@ const AdminPanel = ({ onSwitchToLogin }) => {
       setChangePasswordMessage(`❌ ${userMessage}`);
       setChangePasswordMessageType('error');
       logger.error('Error updating admin password', parsedError);
+    }
+  };
+
+  const handleChangeUserRole = async (userId, newRole) => {
+    try {
+      await http.put(`/change-user-role/${userId}`, {
+        role: newRole
+      });
+
+      setMessage('✅ User role updated successfully!');
+      setMessageType('success');
+      setEditingRoleId(null);
+      setEditingRoleValue('');
+      fetchAllAccounts();
+    } catch (error) {
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setMessage(`❌ Error changing role: ${userMessage}`);
+      setMessageType('error');
+      logger.error('Error changing user role', parsedError);
     }
   };
 
@@ -439,53 +461,124 @@ const AdminPanel = ({ onSwitchToLogin }) => {
                       {new Date(account.created_at).toLocaleDateString()}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
-                      {deleteConfirm === account.id ? (
-                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                          <button
-                            onClick={() => handleDeleteAccount(account.id)}
-                            style={{
-                              padding: '5px 10px',
-                              backgroundColor: '#dc3545',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px'
-                            }}
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            style={{
-                              padding: '5px 10px',
-                              backgroundColor: '#6c757d',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px'
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setDeleteConfirm(account.id)}
-                          style={{
-                            padding: '5px 10px',
-                            backgroundColor: '#dc3545',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '12px'
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {editingRoleId === account.id ? (
+                          <>
+                            <select
+                              value={editingRoleValue}
+                              onChange={(e) => setEditingRoleValue(e.target.value)}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                border: '1px solid #ddd',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <option value="employee">Employee</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                            <button
+                              onClick={() => handleChangeUserRole(account.id, editingRoleValue)}
+                              style={{
+                                padding: '4px 10px',
+                                backgroundColor: '#28a745',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingRoleId(null);
+                                setEditingRoleValue('');
+                              }}
+                              style={{
+                                padding: '4px 10px',
+                                backgroundColor: '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingRoleId(account.id);
+                                setEditingRoleValue(account.role);
+                              }}
+                              style={{
+                                padding: '4px 10px',
+                                backgroundColor: '#17a2b8',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Edit Role
+                            </button>
+                            {deleteConfirm === account.id ? (
+                              <>
+                                <button
+                                  onClick={() => handleDeleteAccount(account.id)}
+                                  style={{
+                                    padding: '4px 10px',
+                                    backgroundColor: '#dc3545',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirm(null)}
+                                  style={{
+                                    padding: '4px 10px',
+                                    backgroundColor: '#6c757d',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => setDeleteConfirm(account.id)}
+                                style={{
+                                  padding: '4px 10px',
+                                  backgroundColor: '#dc3545',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
