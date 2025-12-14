@@ -172,12 +172,18 @@ const MakePaymentForm = ({ loggedInUser }) => {
                   <label>Payment Amount ($)</label>
                   <input
                     type="number"
-                    placeholder="0.00"
+                    placeholder={`Max: $${(loan.remaining_balance || 0).toFixed(2)}`}
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     required
                   />
                 </div>
+
+                {paymentAmount && parseFloat(paymentAmount) > parseFloat(loan.remaining_balance || 0) && (
+                  <div style={{ marginBottom: '15px', padding: '12px', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px', color: '#856404' }}>
+                    ⚠️ <strong>Overpayment Alert:</strong> Payment amount ($${parseFloat(paymentAmount).toFixed(2)}) exceeds remaining balance ($${(loan.remaining_balance || 0).toFixed(2)})
+                  </div>
+                )}
 
                 {/* Show redemption fee input only if payment will fully pay the loan */}
                 {paymentAmount && loan.remaining_balance && (parseFloat(loan.remaining_balance) - parseFloat(paymentAmount)) <= 0 && (
