@@ -439,7 +439,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
           paymentAmount: parseFloat(loanFormData.paymentAmount),
           paymentMethod: loanFormData.paymentMethod,
           paymentDate: new Date().toISOString(),
-          processedByUserId: loggedInUser?.id,
+          userId: loggedInUser?.id,
           processedByUsername: loggedInUser?.username
         };
       } else if (operationType === 'addMoney') {
@@ -1664,16 +1664,16 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                       type="number"
                       value={loanFormData.paymentAmount}
                       onChange={(e) => setLoanFormData({ ...loanFormData, paymentAmount: e.target.value })}
-                      placeholder={`Max: $${(selectedLoan?.totalPayableAmount || 0).toFixed(2)}`}
+                      placeholder={`Max: $${(selectedLoan?.remainingBalance || 0).toFixed(2)}`}
                       step="0.01"
                       required
                       disabled={loadingSubmit}
                     />
                   </div>
                   
-                  {loanFormData.paymentAmount && parseFloat(loanFormData.paymentAmount) > (selectedLoan?.totalPayableAmount || 0) && (
+                  {loanFormData.paymentAmount && parseFloat(loanFormData.paymentAmount) > (selectedLoan?.remainingBalance || 0) && (
                     <div className="alert alert-warning" style={{ marginBottom: '15px', padding: '12px', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px', color: '#856404' }}>
-                      ⚠️ <strong>Overpayment Alert:</strong> Payment amount ($${parseFloat(loanFormData.paymentAmount).toFixed(2)}) exceeds total owed ($${(selectedLoan?.totalPayableAmount || 0).toFixed(2)}) by $${(parseFloat(loanFormData.paymentAmount) - (selectedLoan?.totalPayableAmount || 0)).toFixed(2)}
+                      ⚠️ <strong>Overpayment Alert:</strong> Payment amount ($${parseFloat(loanFormData.paymentAmount).toFixed(2)}) exceeds remaining balance ($${(selectedLoan?.remainingBalance || 0).toFixed(2)}) by $${(parseFloat(loanFormData.paymentAmount) - (selectedLoan?.remainingBalance || 0)).toFixed(2)}
                     </div>
                   )}
                   
