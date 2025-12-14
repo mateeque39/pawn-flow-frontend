@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { http } from './services/httpClient';
 import { parseError, getErrorMessage } from './services/errorHandler';
 import logger from './services/logger';
@@ -33,20 +33,14 @@ const AdminPanel = ({ onSwitchToLogin }) => {
     e.preventDefault();
     
     try {
-      const response = await http.post('/verify-admin-password', {
+      await http.post('/verify-admin-password', {
         password: adminPassword
       });
 
-      if (response?.verified || response?.message.includes('verified')) {
-        setIsAuthenticated(true);
-        setAdminPassword('');
-        setMessage('');
-        fetchAllAccounts();
-      } else {
-        setMessage('❌ Incorrect admin password');
-        setMessageType('error');
-        setAdminPassword('');
-      }
+      setIsAuthenticated(true);
+      setAdminPassword('');
+      setMessage('');
+      fetchAllAccounts();
     } catch (error) {
       setMessage('❌ Incorrect admin password');
       setMessageType('error');
@@ -122,7 +116,7 @@ const AdminPanel = ({ onSwitchToLogin }) => {
     }
 
     try {
-      const response = await http.post('/register', {
+      await http.post('/register', {
         username: registerData.username,
         password: registerData.password,
         role: registerData.role
@@ -178,7 +172,7 @@ const AdminPanel = ({ onSwitchToLogin }) => {
     }
 
     try {
-      const response = await http.post('/update-admin-password', {
+      await http.post('/update-admin-password', {
         currentPassword: changePasswordData.currentPassword,
         newPassword: changePasswordData.newPassword
       });
