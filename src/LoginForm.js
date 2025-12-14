@@ -3,7 +3,7 @@ import { http } from './services/httpClient';
 import logger from './services/logger';
 import { getErrorMessage } from './services/errorHandler';
 
-const LoginForm = ({ onLoginSuccess, onSwitchToRegister }) => {
+const LoginForm = ({ onLoginSuccess, onSwitchToRegister, onSwitchToAdminPanel }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -64,18 +64,18 @@ const LoginForm = ({ onLoginSuccess, onSwitchToRegister }) => {
       )}
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
-        <p>Don't have an account? <button 
-          onClick={onSwitchToRegister}
+        <p>Need admin access? <button 
+          onClick={onSwitchToAdminPanel}
           style={{ 
             background: 'none', 
             border: 'none', 
-            color: '#007bff', 
+            color: '#28a745', 
             textDecoration: 'underline', 
             cursor: 'pointer',
             fontWeight: 'bold'
           }}
         >
-          Register here
+          Admin Panel
         </button></p>
       </div>
     </div>

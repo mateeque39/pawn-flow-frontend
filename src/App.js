@@ -3,6 +3,7 @@ import logger from './services/logger';
 import { http } from './services/httpClient';
 import RegisterForm from './RegisterForm';
 import LoginForm from './LoginForm';
+import AdminPanel from './AdminPanel';
 import ShiftManagement from './ShiftManagement';
 import CashReport from './CashReport';
 import CreateCustomerProfileForm from './CreateCustomerProfileForm';
@@ -14,6 +15,7 @@ import ErrorBoundary from './ErrorBoundary'; // Import the ErrorBoundary compone
 function App() {
   const [isLogin, setIsLogin] = useState(true);
   const [isRegister, setIsRegister] = useState(false);
+  const [isAdminPanel, setIsAdminPanel] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(() => {
     // Restore logged-in user from localStorage on app load
     const saved = localStorage.getItem('loggedInUser');
@@ -45,6 +47,11 @@ function App() {
   });
   const [registrationPassword, setRegistrationPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState('');
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -107,9 +114,10 @@ function App() {
   };
 
   const handleRegistrationPasswordSubmit = () => {
-    const REGISTRATION_PASSWORD = 'pawnflowniran!@#12';
+    const DEFAULT_REGISTRATION_PASSWORD = 'pawnflowniran!@#12';
+    const STORED_REGISTRATION_PASSWORD = localStorage.getItem('registrationPassword') || DEFAULT_REGISTRATION_PASSWORD;
     
-    if (registrationPassword === REGISTRATION_PASSWORD) {
+    if (registrationPassword === STORED_REGISTRATION_PASSWORD) {
       setShowPasswordModal(false);
       setRegistrationPassword('');
       setIsRegister(true);
@@ -123,6 +131,48 @@ function App() {
   const handleRegistrationClick = () => {
     setShowPasswordModal(true);
     setRegistrationPassword('');
+  };
+
+  const handleChangePassword = () => {
+    const REGISTRATION_PASSWORD = 'pawnflowniran!@#12';
+    
+    setPasswordChangeMessage('');
+    
+    // Validate old password
+    if (oldPassword !== REGISTRATION_PASSWORD) {
+      setPasswordChangeMessage('❌ Old password is incorrect');
+      return;
+    }
+    
+    // Validate new password
+    if (!newPassword || newPassword.trim() === '') {
+      setPasswordChangeMessage('❌ New password cannot be empty');
+      return;
+    }
+    
+    // Validate password match
+    if (newPassword !== confirmPassword) {
+      setPasswordChangeMessage('❌ New passwords do not match');
+      return;
+    }
+    
+    // Validate password length
+    if (newPassword.length < 8) {
+      setPasswordChangeMessage('❌ Password must be at least 8 characters');
+      return;
+    }
+    
+    // Save new password to localStorage
+    localStorage.setItem('registrationPassword', newPassword);
+    
+    setPasswordChangeMessage('✅ Password changed successfully!');
+    setTimeout(() => {
+      setShowChangePasswordModal(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordChangeMessage('');
+    }, 2000);
   };
 
   return (
@@ -225,6 +275,143 @@ function App() {
         </div>
       )}
 
+      {/* Change Registration Password Modal */}
+      {showChangePasswordModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '40px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            minWidth: '300px',
+            maxWidth: '400px'
+          }}>
+            <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>Change Registration Password</h3>
+            
+            {passwordChangeMessage && (
+              <div style={{
+                marginBottom: '20px',
+                padding: '12px',
+                backgroundColor: passwordChangeMessage.includes('✅') ? '#d4edda' : '#f8d7da',
+                border: `1px solid ${passwordChangeMessage.includes('✅') ? '#28a745' : '#f5c6cb'}`,
+                borderRadius: '4px',
+                color: passwordChangeMessage.includes('✅') ? '#155724' : '#721c24',
+                textAlign: 'center'
+              }}>
+                {passwordChangeMessage}
+              </div>
+            )}
+            
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Old Password</label>
+              <input
+                type="password"
+                placeholder="Enter current password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>New Password</label>
+              <input
+                type="password"
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Confirm New Password</label>
+              <input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleChangePassword()}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={handleChangePassword}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Change Password
+              </button>
+              <button
+                onClick={() => {
+                  setShowChangePasswordModal(false);
+                  setOldPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                  setPasswordChangeMessage('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container">
         {isRegister ? (
           <div className="form-container">
@@ -246,8 +433,19 @@ function App() {
             <LoginForm 
               onLoginSuccess={handleLoginSuccess}
               onSwitchToRegister={handleRegistrationClick}
+              onSwitchToAdminPanel={() => {
+                setIsLogin(false);
+                setIsAdminPanel(true);
+              }}
             />
           </div>
+        ) : isAdminPanel ? (
+          <AdminPanel 
+            onSwitchToLogin={() => {
+              setIsAdminPanel(false);
+              setIsLogin(true);
+            }}
+          />
         ) : loggedInUser ? (
           <div>
             <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Welcome to Dashboard, {loggedInUser.username}</h2>
@@ -259,7 +457,10 @@ function App() {
               <button className="btn-info" onClick={() => setSelectedOption('shift-management')}>Shift Management</button>
               <button className="btn-success" onClick={() => setSelectedOption('cash-report')}>💰 Cash Report</button>
               {loggedInUser?.role === 'admin' && (
-                <button className="btn-warning" onClick={() => setSelectedOption('register-user')}>👥 Register User (Admin Only)</button>
+                <>
+                  <button className="btn-warning" onClick={() => setSelectedOption('register-user')}>👥 Register User (Admin Only)</button>
+                  <button className="btn-warning" onClick={() => setShowChangePasswordModal(true)}>🔐 Change Registration Password (Admin Only)</button>
+                </>
               )}
               <button className="btn-danger" onClick={handleLogout}>Logout</button>
             </div>
