@@ -20,21 +20,38 @@ const AdminPanel = ({ onSwitchToLogin }) => {
     confirmPassword: '',
     role: 'employee'
   });
+  const [showChangePasswordSection, setShowChangePasswordSection] = useState(false);
+  const [changePasswordData, setChangePasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  const [changePasswordMessage, setChangePasswordMessage] = useState('');
+  const [changePasswordMessageType, setChangePasswordMessageType] = useState('');
 
-  const ADMIN_PASSWORD = 'pawnflowniran!@#12';
-
-  const handleAdminPasswordSubmit = (e) => {
+  const handleAdminPasswordSubmit = async (e) => {
     e.preventDefault();
     
-    if (adminPassword === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setAdminPassword('');
-      setMessage('');
-      fetchAllAccounts();
-    } else {
+    try {
+      const response = await http.post('/verify-admin-password', {
+        password: adminPassword
+      });
+
+      if (response?.verified || response?.message.includes('verified')) {
+        setIsAuthenticated(true);
+        setAdminPassword('');
+        setMessage('');
+        fetchAllAccounts();
+      } else {
+        setMessage('❌ Incorrect admin password');
+        setMessageType('error');
+        setAdminPassword('');
+      }
+    } catch (error) {
       setMessage('❌ Incorrect admin password');
       setMessageType('error');
       setAdminPassword('');
+      logger.error('Error verifying admin password', error);
     }
   };
 
@@ -125,6 +142,63 @@ const AdminPanel = ({ onSwitchToLogin }) => {
     }
   };
 
+  const handleChangeAdminPassword = async (e) => {
+    e.preventDefault();
+    setChangePasswordMessage('');
+
+    // Validate inputs
+    if (!changePasswordData.currentPassword || !changePasswordData.newPassword) {
+      setChangePasswordMessage('❌ All fields are required');
+      setChangePasswordMessageType('error');
+      return;
+    }
+
+    if (changePasswordData.newPassword !== changePasswordData.confirmNewPassword) {
+      setChangePasswordMessage('❌ New passwords do not match');
+      setChangePasswordMessageType('error');
+      return;
+    }
+
+    if (changePasswordData.newPassword.length < 8) {
+      setChangePasswordMessage('❌ Password must be at least 8 characters');
+      setChangePasswordMessageType('error');
+      return;
+    }
+
+    if (!/[A-Z]/.test(changePasswordData.newPassword)) {
+      setChangePasswordMessage('❌ Password must contain at least one uppercase letter');
+      setChangePasswordMessageType('error');
+      return;
+    }
+
+    if (!/[0-9]/.test(changePasswordData.newPassword)) {
+      setChangePasswordMessage('❌ Password must contain at least one number');
+      setChangePasswordMessageType('error');
+      return;
+    }
+
+    try {
+      const response = await http.post('/update-admin-password', {
+        currentPassword: changePasswordData.currentPassword,
+        newPassword: changePasswordData.newPassword
+      });
+
+      setChangePasswordMessage('✅ Password updated successfully!');
+      setChangePasswordMessageType('success');
+      setChangePasswordData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+      setTimeout(() => {
+        setShowChangePasswordSection(false);
+        setChangePasswordMessage('');
+      }, 2000);
+    } catch (error) {
+      const parsedError = parseError(error);
+      const userMessage = getErrorMessage(parsedError);
+      setChangePasswordMessage(`❌ ${userMessage}`);
+      setChangePasswordMessageType('error');
+      logger.error('Error updating admin password', parsedError);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="form-container" style={{ maxWidth: '400px' }}>
@@ -174,12 +248,18 @@ const AdminPanel = ({ onSwitchToLogin }) => {
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
       <h2>Admin Panel</h2>
 
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <button
           onClick={() => setShowRegisterForm(!showRegisterForm)}
           className="btn-success"
         >
           {showRegisterForm ? '✕ Cancel' : '➕ Register New Account'}
+        </button>
+        <button
+          onClick={() => setShowChangePasswordSection(!showChangePasswordSection)}
+          className="btn-warning"
+        >
+          {showChangePasswordSection ? '✕ Cancel' : '🔐 Change Admin Password'}
         </button>
         <button
           onClick={() => {
@@ -253,6 +333,60 @@ const AdminPanel = ({ onSwitchToLogin }) => {
             </div>
             <button type="submit" className="btn-success" style={{ width: '100%', marginTop: '10px' }}>
               Register Account
+            </button>
+          </form>
+        </div>
+      )}
+
+      {showChangePasswordSection && (
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #ffc107'
+        }}>
+          <h4>🔐 Change Admin Password</h4>
+          <form onSubmit={handleChangeAdminPassword}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px', maxWidth: '500px' }}>
+              <div className="form-group">
+                <label>Current Admin Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter current admin password"
+                  value={changePasswordData.currentPassword}
+                  onChange={(e) => setChangePasswordData({ ...changePasswordData, currentPassword: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter new password (min 8 chars, 1 uppercase, 1 number)"
+                  value={changePasswordData.newPassword}
+                  onChange={(e) => setChangePasswordData({ ...changePasswordData, newPassword: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={changePasswordData.confirmNewPassword}
+                  onChange={(e) => setChangePasswordData({ ...changePasswordData, confirmNewPassword: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            {changePasswordMessage && (
+              <div className={`alert alert-${changePasswordMessageType === 'success' ? 'success' : 'error'}`} style={{ marginTop: '15px' }}>
+                {changePasswordMessage}
+              </div>
+            )}
+            <button type="submit" className="btn-warning" style={{ width: '100%', marginTop: '10px' }}>
+              Update Password
             </button>
           </form>
         </div>
