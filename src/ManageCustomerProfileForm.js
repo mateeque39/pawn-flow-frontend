@@ -676,13 +676,13 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
               <div style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold' }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: '#222' }}>
                       {displayName}
                     </p>
-                    <p style={{ margin: '5px 0', fontSize: '14px' }}>
+                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#222', fontWeight: '600' }}>
                       <strong>ID:</strong> {profile.id}
                     </p>
-                    <p style={{ margin: '5px 0', fontSize: '14px' }}>
+                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#222', fontWeight: '600' }}>
                       <strong>Phone:</strong> {displayPhone}
                     </p>
                   </div>
