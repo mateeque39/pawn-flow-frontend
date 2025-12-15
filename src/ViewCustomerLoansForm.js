@@ -600,6 +600,26 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                   <strong>Item:</strong> {loan.item_description || loan.itemDescription || loan.collateral_description || loan.collateralDescription || 'N/A'}
                 </p>
 
+                {/* Display Collateral Image if available */}
+                {(loan.collateral_image || loan.collateralImage) && (
+                  <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>📷 Item Photo:</p>
+                    <img 
+                      src={loan.collateral_image || loan.collateralImage} 
+                      alt="Collateral Item" 
+                      style={{ 
+                        maxWidth: '200px', 
+                        maxHeight: '250px', 
+                        borderRadius: '6px', 
+                        border: '2px solid #ddd',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => window.open(loan.collateral_image || loan.collateralImage, '_blank')}
+                      title="Click to view full size"
+                    />
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                   <button
                     onClick={() => handleDownloadReceipt(loan)}
