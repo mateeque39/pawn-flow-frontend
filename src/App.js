@@ -457,8 +457,8 @@ function App() {
           </div>
         ) : (
           <div className="form-container">
-            <h2>Session Expired</h2>
-            <p>Please log in again to continue.</p>
+            <h2 style={{ color: '#5dd9ff', textAlign: 'center', marginBottom: '10px' }}>Session Expired</h2>
+            <p style={{ color: '#e0e0e0', textAlign: 'center', marginBottom: '30px' }}>Please log in again to continue.</p>
             <LoginForm 
               onLoginSuccess={handleLoginSuccess}
               onSwitchToRegister={() => {

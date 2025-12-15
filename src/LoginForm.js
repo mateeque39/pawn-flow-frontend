@@ -33,7 +33,7 @@ const LoginForm = ({ onLoginSuccess, onSwitchToRegister, onSwitchToAdminPanel })
 
   return (
     <div className="form-container">
-      <h3 style={{ color: '#fff', textAlign: 'center', marginBottom: '30px' }}>Login to Your Account</h3>
+      <h3 style={{ color: '#fff !important', textAlign: 'center', marginBottom: '30px', fontWeight: 'bold' }}>Login to Your Account</h3>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Username</label>
