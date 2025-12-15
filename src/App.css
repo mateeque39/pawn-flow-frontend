@@ -1539,6 +1539,21 @@ tr:hover {
   box-shadow: 0 6px 20px rgba(79, 172, 254, 0.2);
 }
 
+/* Override list styling for shift report sections */
+:root.dark-mode div[style*="backgroundColor: #2c3e50"] li {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid #444 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+:root.dark-mode div[style*="backgroundColor: #2c3e50"] li:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid #444 !important;
+  box-shadow: none !important;
+}
+
 :root.dark-mode .badge-success {
   background: linear-gradient(135deg, #1a3a2a 0%, #0f4620 100%);
   color: #90ee90;
