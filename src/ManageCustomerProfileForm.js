@@ -734,27 +734,27 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                   <div style={{ flex: 3 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                       <div>
-                        <p style={{ margin: '5px 0' }}>
+                        <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
                           <strong>Name:</strong> {selectedProfile.firstName && selectedProfile.lastName ? `${selectedProfile.firstName} ${selectedProfile.lastName}` : `${selectedProfile.firstName || selectedProfile.lastName || 'N/A'}`}
                         </p>
-                        <p style={{ margin: '5px 0' }}>
+                        <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
                           <strong>Customer ID:</strong> {selectedProfile.id}
                         </p>
-                        <p style={{ margin: '5px 0' }}>
+                        <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
                           <strong>Phone:</strong> {selectedProfile.homePhone || selectedProfile.mobilePhone || 'N/A'}
                         </p>
-                        <p style={{ margin: '5px 0' }}>
+                        <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
                           <strong>Email:</strong> {selectedProfile.email || 'N/A'}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '5px 0' }}>
+                        <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
                           <strong>Address:</strong> {selectedProfile.streetAddress && selectedProfile.city ? `${selectedProfile.streetAddress}, ${selectedProfile.city}${selectedProfile.state ? ', ' + selectedProfile.state : ''}${selectedProfile.zipcode ? ' ' + selectedProfile.zipcode : ''}` : 'N/A'}
                         </p>
-                        <p style={{ margin: '5px 0' }}>
+                        <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
                           <strong>ID:</strong> {selectedProfile.idNumber || selectedProfile.idType || 'N/A'}
                         </p>
-                        <p style={{ margin: '5px 0' }}>
+                        <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
                           <strong>Joined:</strong> {selectedProfile.createdAt && new Date(selectedProfile.createdAt).getTime() > 0 ? new Date(selectedProfile.createdAt).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
