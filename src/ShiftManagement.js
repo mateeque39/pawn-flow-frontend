@@ -689,7 +689,7 @@ const ShiftManagement = ({ userId = 1 }) => {
               </div>
 
               {shiftReport.payments.length > 0 && (
-                <div style={{ marginBottom: '20px', backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
+                <div className="shift-report-section" style={{ marginBottom: '20px', backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
                   <h5 style={{ color: '#fff', marginTop: 0 }}>Payments During Shift</h5>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
                     {shiftReport.payments.map((payment) => (
@@ -698,7 +698,7 @@ const ShiftManagement = ({ userId = 1 }) => {
                         style={{
                           padding: '8px',
                           marginBottom: '5px',
-                          color: '#fff',
+                          color: '#000',
                           backgroundColor: 'transparent',
                           borderBottom: '1px solid #444'
                         }}
@@ -714,7 +714,7 @@ const ShiftManagement = ({ userId = 1 }) => {
               )}
 
               {shiftReport.loansCreated.length > 0 && (
-                <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
+                <div className="shift-report-section" style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
                   <h5 style={{ color: '#fff', marginTop: 0 }}>Loans Created During Shift</h5>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
                     {shiftReport.loansCreated.map((loan) => (
@@ -723,7 +723,7 @@ const ShiftManagement = ({ userId = 1 }) => {
                         style={{
                           padding: '8px',
                           marginBottom: '5px',
-                          color: '#fff',
+                          color: '#000',
                           backgroundColor: 'transparent',
                           borderBottom: '1px solid #444'
                         }}
