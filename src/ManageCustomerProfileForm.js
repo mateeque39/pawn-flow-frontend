@@ -1085,73 +1085,88 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', gap: '12px', marginBottom: '15px' }}>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Amount</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Amount</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.loanAmount || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Interest Rate</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Interest Rate</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           {loan.interestRate}%
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Interest Amount</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Interest Amount</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.interestAmount || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Recurring Fee</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Recurring Fee</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.recurringFee || 0).toFixed(2)}
                         </p>
                       </div>
                       {loan.status?.toLowerCase() === 'redeemed' && loan.redemptionFee > 0 && (
                         <div>
-                          <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Redemption Fee</p>
+                          <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Redemption Fee</p>
                           <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold', color: '#d32f2f' }}>
                             ${(loan.redemptionFee || 0).toFixed(2)}
                           </p>
                         </div>
                       )}
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Total Payable</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Total Payable</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.totalPayableAmount || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Remaining Balance</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Remaining Balance</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold', color: loan.remainingBalance > 0 ? '#d32f2f' : '#388e3c' }}>
                           ${(loan.remainingBalance || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Created</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Created</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
                           {new Date(loan.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>Due</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Due</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
                           {loan.dueDate ? new Date(loan.dueDate).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
                     </div>
 
-                    <p style={{ margin: '12px 0', fontSize: '13px', color: '#666' }}>
+                    <p style={{ margin: '12px 0', fontSize: '13px', color: '#333', fontWeight: '500' }}>
                       <strong>Item:</strong> {loan.item_description || loan.itemDescription || 'N/A'}
                     </p>
 
                     {loan.collateral_image && (
-                      <div style={{ margin: '12px 0' }}>
+                      <div style={{ margin: '12px 0', cursor: 'pointer' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#555', fontWeight: '600' }}>📷 Item Photo:</p>
                         <img
                           src={loan.collateral_image}
                           alt="Collateral"
-                          style={{ maxWidth: '250px', maxHeight: '250px', borderRadius: '4px', border: '2px solid #ddd' }}
+                          onClick={() => {
+                            // Create a modal view for the image
+                            const imageWindow = window.open('', '_blank');
+                            imageWindow.document.write(`
+                              <html>
+                                <head><title>Loan Item Photo - Loan #${loan.id}</title></head>
+                                <body style="margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #000;">
+                                  <img src="${loan.collateral_image}" style="max-width: 90vw; max-height: 90vh; object-fit: contain;">
+                                </body>
+                              </html>
+                            `);
+                            imageWindow.document.close();
+                          }}
+                          style={{ maxWidth: '250px', maxHeight: '250px', borderRadius: '4px', border: '2px solid #ddd', cursor: 'pointer', transition: 'transform 0.2s' }}
+                          title="Click to view full size"
                         />
                       </div>
                     )}
