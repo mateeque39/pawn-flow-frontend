@@ -1419,7 +1419,7 @@ tr:hover {
 }
 
 :root.dark-mode h4 {
-  color: #e0e0e0;
+  color: #222;
 }
 
 :root.dark-mode p {
@@ -1448,6 +1448,8 @@ tr:hover {
 :root.dark-mode .card-header {
   background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
   box-shadow: 0 4px 15px rgba(79, 172, 254, 0.2);
+  color: #222;
+  font-weight: 600;
 }
 
 :root.dark-mode .card-field strong {
