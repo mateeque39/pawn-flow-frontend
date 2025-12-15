@@ -566,6 +566,7 @@ const ShiftManagement = ({ userId = 1 }) => {
                     padding: '12px',
                     borderRadius: '4px',
                     border: '1px solid #ddd',
+                    color: '#333'
                   }}
                 >
                   <p>

@@ -726,7 +726,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                         style={{ width: '150px', height: '150px', borderRadius: '8px', objectFit: 'cover', border: '2px solid #ddd' }}
                       />
                     ) : (
-                      <div style={{ width: '150px', height: '150px', borderRadius: '8px', backgroundColor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+                      <div style={{ width: '150px', height: '150px', borderRadius: '8px', backgroundColor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555' }}>
                         No Photo
                       </div>
                     )}
@@ -848,7 +848,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                             style={{ width: '150px', height: '150px', borderRadius: '8px', objectFit: 'cover', border: '2px solid #ddd' }}
                           />
                         ) : (
-                          <div style={{ width: '150px', height: '150px', borderRadius: '8px', backgroundColor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+                          <div style={{ width: '150px', height: '150px', borderRadius: '8px', backgroundColor: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555' }}>
                             No Photo
                           </div>
                         )}
@@ -861,7 +861,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                           disabled={loadingSubmit}
                           style={{ marginBottom: '10px' }}
                         />
-                        <p style={{ fontSize: '12px', color: '#888', margin: '10px 0 0 0' }}>
+                        <p style={{ fontSize: '12px', color: '#333', fontWeight: '600', margin: '10px 0 0 0' }}>
                           Select an image file (JPG, PNG, etc.) for the customer profile picture
                         </p>
                       </div>
@@ -1065,7 +1065,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                         <p style={{ margin: '0 0 5px 0', fontSize: '16px', fontWeight: 'bold' }}>
                           Loan #{loan.id}
                         </p>
-                        <p style={{ margin: '5px 0', fontSize: '12px', color: '#888' }}>
+                        <p style={{ margin: '5px 0', fontSize: '12px', color: '#333', fontWeight: '600' }}>
                           Transaction: {loan.transactionNumber}
                         </p>
                       </div>
