@@ -533,7 +533,7 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                     <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold' }}>
                       Loan ID: {loan.id}
                     </p>
-                    <p style={{ margin: '0', fontSize: '12px', color: '#888' }}>
+                    <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>
                       Transaction: {loan.transactionNumber || 'N/A'}
                     </p>
                   </div>
@@ -584,19 +584,19 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                   </div>
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Created</p>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#222', fontWeight: '600' }}>
                       {new Date(loan.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Due Date</p>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#222', fontWeight: '600' }}>
                       {loan.dueDate ? new Date(loan.dueDate).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                 </div>
 
-                <p style={{ margin: '12px 0 0 0', fontSize: '13px', color: '#666' }}>
+                <p style={{ margin: '12px 0 0 0', fontSize: '13px', color: '#222', fontWeight: '600' }}>
                   <strong>Item:</strong> {loan.item_description || loan.itemDescription || loan.collateral_description || loan.collateralDescription || 'N/A'}
                 </p>
 
