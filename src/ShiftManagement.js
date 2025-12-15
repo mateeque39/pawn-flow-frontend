@@ -676,14 +676,14 @@ const ShiftManagement = ({ userId = 1 }) => {
             <div>
               <div style={{ marginBottom: '20px', backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
                 <h5 style={{ color: '#fff', marginTop: 0 }}>Shift Summary</h5>
-                <p>
+                <p style={{ color: '#fff', margin: '8px 0' }}>
                   <strong>Total Transactions:</strong> {shiftReport.summary.totalTransactions}
                 </p>
-                <p>
+                <p style={{ color: '#fff', margin: '8px 0' }}>
                   <strong>Payment Transactions:</strong>{' '}
                   {shiftReport.summary.totalPaymentTransactions}
                 </p>
-                <p>
+                <p style={{ color: '#fff', margin: '8px 0' }}>
                   <strong>Loans Created:</strong> {shiftReport.summary.totalLoansCreated}
                 </p>
               </div>
