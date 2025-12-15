@@ -697,11 +697,9 @@ const ShiftManagement = ({ userId = 1 }) => {
                         key={payment.id}
                         style={{
                           padding: '8px',
-                          borderBottom: '1px solid #444',
                           marginBottom: '5px',
                           color: '#fff',
                           backgroundColor: 'transparent',
-                          border: 'none',
                           borderBottom: '1px solid #444'
                         }}
                       >
@@ -724,11 +722,9 @@ const ShiftManagement = ({ userId = 1 }) => {
                         key={loan.id}
                         style={{
                           padding: '8px',
-                          borderBottom: '1px solid #444',
                           marginBottom: '5px',
                           color: '#fff',
                           backgroundColor: 'transparent',
-                          border: 'none',
                           borderBottom: '1px solid #444'
                         }}
                       >
