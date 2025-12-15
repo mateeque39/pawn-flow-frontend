@@ -699,7 +699,10 @@ const ShiftManagement = ({ userId = 1 }) => {
                           padding: '8px',
                           borderBottom: '1px solid #444',
                           marginBottom: '5px',
-                          color: '#fff'
+                          color: '#fff',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid #444'
                         }}
                       >
                         <strong>{payment.customer_name}</strong> - ${' '}
@@ -723,7 +726,10 @@ const ShiftManagement = ({ userId = 1 }) => {
                           padding: '8px',
                           borderBottom: '1px solid #444',
                           marginBottom: '5px',
-                          color: '#fff'
+                          color: '#fff',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid #444'
                         }}
                       >
                         <strong>{loan.customer_name}</strong> - ${' '}
