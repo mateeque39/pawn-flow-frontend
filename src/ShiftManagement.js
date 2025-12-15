@@ -506,8 +506,8 @@ const ShiftManagement = ({ userId = 1 }) => {
 
           {todaySummary && (
             <div>
-              <div style={{ marginBottom: '20px', backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px' }}>
-                <h5>Shift Details</h5>
+              <div style={{ marginBottom: '20px', backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
+                <h5 style={{ color: '#fff', marginTop: 0 }}>Shift Details</h5>
                 <p>
                   <strong>Shift Started:</strong>{' '}
                   {new Date(todaySummary.shift.shift_start_time).toLocaleString()}
@@ -519,8 +519,8 @@ const ShiftManagement = ({ userId = 1 }) => {
               </div>
 
               {todaySummary.currentStats && (
-                <div style={{ marginBottom: '20px', backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px' }}>
-                  <h5>Current Statistics</h5>
+                <div style={{ marginBottom: '20px', backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
+                  <h5 style={{ color: '#fff', marginTop: 0 }}>Current Statistics</h5>
                   <p>
                     <strong>Opening Balance:</strong> ${' '}
                     {parseFloat(todaySummary.currentStats.openingBalance).toFixed(2)}
@@ -562,11 +562,11 @@ const ShiftManagement = ({ userId = 1 }) => {
                   key={shift.id}
                   style={{
                     marginBottom: '15px',
-                    backgroundColor: '#f9f9f9',
+                    backgroundColor: '#2c3e50',
                     padding: '12px',
                     borderRadius: '4px',
-                    border: '1px solid #ddd',
-                    color: '#333'
+                    border: '1px solid #444',
+                    color: '#fff'
                   }}
                 >
                   <p>
