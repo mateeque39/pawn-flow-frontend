@@ -674,8 +674,8 @@ const ShiftManagement = ({ userId = 1 }) => {
 
           {shiftReport && (
             <div>
-              <div style={{ marginBottom: '20px', backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px' }}>
-                <h5>Shift Summary</h5>
+              <div style={{ marginBottom: '20px', backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
+                <h5 style={{ color: '#fff', marginTop: 0 }}>Shift Summary</h5>
                 <p>
                   <strong>Total Transactions:</strong> {shiftReport.summary.totalTransactions}
                 </p>
@@ -689,16 +689,17 @@ const ShiftManagement = ({ userId = 1 }) => {
               </div>
 
               {shiftReport.payments.length > 0 && (
-                <div style={{ marginBottom: '20px' }}>
-                  <h5>Payments During Shift</h5>
+                <div style={{ marginBottom: '20px', backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
+                  <h5 style={{ color: '#fff', marginTop: 0 }}>Payments During Shift</h5>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
                     {shiftReport.payments.map((payment) => (
                       <li
                         key={payment.id}
                         style={{
                           padding: '8px',
-                          borderBottom: '1px solid #ddd',
+                          borderBottom: '1px solid #444',
                           marginBottom: '5px',
+                          color: '#fff'
                         }}
                       >
                         <strong>{payment.customer_name}</strong> - ${' '}
@@ -712,16 +713,17 @@ const ShiftManagement = ({ userId = 1 }) => {
               )}
 
               {shiftReport.loansCreated.length > 0 && (
-                <div>
-                  <h5>Loans Created During Shift</h5>
+                <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '4px', color: '#fff' }}>
+                  <h5 style={{ color: '#fff', marginTop: 0 }}>Loans Created During Shift</h5>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
                     {shiftReport.loansCreated.map((loan) => (
                       <li
                         key={loan.id}
                         style={{
                           padding: '8px',
-                          borderBottom: '1px solid #ddd',
+                          borderBottom: '1px solid #444',
                           marginBottom: '5px',
+                          color: '#fff'
                         }}
                       >
                         <strong>{loan.customer_name}</strong> - ${' '}
