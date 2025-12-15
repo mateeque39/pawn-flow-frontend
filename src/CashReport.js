@@ -659,7 +659,7 @@ const CashReport = ({ loggedInUser }) => {
           <div className="card" style={{ marginBottom: '20px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', padding: '20px' }}>
               <div style={{ backgroundColor: '#e8f4f8', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #5dd9ff' }}>
-                <p style={{ margin: '0 0 10px 0' }}>
+                <p style={{ margin: '0 0 10px 0', color: '#222', fontWeight: '600' }}>
                   <strong>Today's Opening Total:</strong>
                 </p>
                 <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#5dd9ff' }}>
@@ -667,7 +667,7 @@ const CashReport = ({ loggedInUser }) => {
                 </p>
               </div>
               <div style={{ backgroundColor: '#d4edda', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #28a745' }}>
-                <p style={{ margin: '0 0 10px 0' }}>
+                <p style={{ margin: '0 0 10px 0', color: '#222', fontWeight: '600' }}>
                   <strong>Today's Closing Total:</strong>
                 </p>
                 <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#28a745' }}>
