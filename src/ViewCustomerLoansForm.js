@@ -530,7 +530,7 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
               <div style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
                   <div>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold' }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: '#222' }}>
                       Loan ID: {loan.id}
                     </p>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>
@@ -554,25 +554,25 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', marginTop: '15px' }}>
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Loan Amount</p>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold' }}>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold', color: '#222' }}>
                       ${(loan.loanAmount || 0).toFixed(2)}
                     </p>
                   </div>
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Interest Rate</p>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold' }}>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold', color: '#222' }}>
                       {(loan.interestRate || 0).toFixed(1)}%
                     </p>
                   </div>
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Interest Amount</p>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold' }}>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold', color: '#222' }}>
                       ${(loan.interestAmount || 0).toFixed(2)}
                     </p>
                   </div>
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Total Payable</p>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold' }}>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '16px', fontWeight: 'bold', color: '#222' }}>
                       ${(loan.totalPayableAmount || 0).toFixed(2)}
                     </p>
                   </div>
