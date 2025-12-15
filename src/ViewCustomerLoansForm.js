@@ -34,6 +34,20 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
     return null;
   };
 
+  // Helper function to format date strings properly (handles YYYY-MM-DD format from backend)
+  const formatDateString = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    // If it's already in YYYY-MM-DD format, parse it directly without timezone conversion
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-');
+      return new Date(year, parseInt(month) - 1, day).toLocaleDateString();
+    }
+    
+    // Otherwise use standard Date parsing
+    return new Date(dateString).toLocaleDateString();
+  };
+
   const handleProfileSelect = async (profile) => {
     // Normalize profile data to handle different field naming conventions from backend
     const normalizedProfile = {
@@ -389,7 +403,7 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                 <strong>ID Number:</strong> {selectedProfile.idNumber || 'N/A'}
               </p>
               <p style={{ margin: '5px 0' }}>
-                <strong>Joined:</strong> {new Date(selectedProfile.createdAt).toLocaleDateString()}
+                <strong>Joined:</strong> {formatDateString(selectedProfile.createdAt)}
               </p>
             </div>
           </div>
@@ -585,13 +599,13 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Created</p>
                     <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#222', fontWeight: '600' }}>
-                      {new Date(loan.createdAt).toLocaleDateString()}
+                      {formatDateString(loan.createdAt)}
                     </p>
                   </div>
                   <div>
                     <p style={{ margin: '0', fontSize: '12px', color: '#333', fontWeight: '600' }}>Due Date</p>
                     <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#222', fontWeight: '600' }}>
-                      {loan.dueDate ? new Date(loan.dueDate).toLocaleDateString() : 'N/A'}
+                      {formatDateString(loan.dueDate)}
                     </p>
                   </div>
                 </div>
