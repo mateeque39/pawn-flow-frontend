@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import logger from './services/logger';
 import { http } from './services/httpClient';
 import RegisterForm from './RegisterForm';
@@ -40,11 +40,6 @@ function App() {
     return null;
   });
   const [selectedOption, setSelectedOption] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Get dark mode preference from localStorage
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
   const [registrationPassword, setRegistrationPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -52,16 +47,6 @@ function App() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordChangeMessage, setPasswordChangeMessage] = useState('');
-
-  // Apply dark mode class to document
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark-mode');
-    } else {
-      document.documentElement.classList.remove('dark-mode');
-    }
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
 
   // Handle Login Success (set logged-in user)
   const handleLoginSuccess = (user) => {
@@ -107,10 +92,6 @@ function App() {
     localStorage.removeItem('loggedInUser');
     setSelectedOption(''); // Clear selected menu option
     logger.info('User logged out');
-  };
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
   };
 
   const handleRegistrationPasswordSubmit = () => {
@@ -176,15 +157,8 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className="App dark-mode">
       <div className="pawnflow-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleDarkMode}
-          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          {isDarkMode ? '☀️ Light' : '🌙 Dark'}
-        </button>
         <div className="header-content">
           <img src="/pawnflow-logo.png" alt="PawnFlow Logo" className="logo-img-title" />
         </div>
