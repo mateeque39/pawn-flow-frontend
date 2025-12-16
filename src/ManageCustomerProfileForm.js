@@ -1112,57 +1112,57 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', gap: '12px', marginBottom: '15px' }}>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Amount</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Amount</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.loanAmount || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Interest Rate</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Interest Rate</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           {loan.interestRate}%
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Interest Amount</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Interest Amount</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.interestAmount || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Recurring Fee</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Recurring Fee</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.recurringFee || 0).toFixed(2)}
                         </p>
                       </div>
                       {loan.status?.toLowerCase() === 'redeemed' && loan.redemptionFee > 0 && (
                         <div>
-                          <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Redemption Fee</p>
+                          <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Redemption Fee</p>
                           <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold', color: '#d32f2f' }}>
                             ${(loan.redemptionFee || 0).toFixed(2)}
                           </p>
                         </div>
                       )}
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Total Payable</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Total Payable</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
                           ${(loan.totalPayableAmount || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Remaining Balance</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Remaining Balance</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold', color: loan.remainingBalance > 0 ? '#d32f2f' : '#388e3c' }}>
                           ${(loan.remainingBalance || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Created</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Created</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
                           {formatDate(loan.createdAt)}
                         </p>
                       </div>
                       <div>
-                        <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Due</p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#000', fontWeight: '600' }}>Due</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
                           {loan.dueDate ? formatDate(loan.dueDate) : 'N/A'}
                         </p>
@@ -1175,7 +1175,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
 
                     {loan.collateral_image && (
                       <div style={{ margin: '12px 0', cursor: 'pointer' }}>
-                        <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#555', fontWeight: '600' }}>📷 Item Photo:</p>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#000', fontWeight: '600' }}>📷 Item Photo:</p>
                         <img
                           src={loan.collateral_image}
                           alt="Collateral"
