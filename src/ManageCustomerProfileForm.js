@@ -105,6 +105,33 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
     return null;
   };
 
+  // Helper function to parse date strings (YYYY-MM-DD format) without timezone conversion
+  // Backend sends dates as YYYY-MM-DD in local timezone, so we parse directly without UTC conversion
+  const parseDateString = (dateString) => {
+    if (!dateString) return null;
+    
+    // If it's already a Date object, return it
+    if (dateString instanceof Date) return dateString;
+    
+    // If it's in YYYY-MM-DD format, parse it directly without timezone conversion
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-');
+      // Create date in local timezone by using new Date(year, month-1, day)
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    
+    // Otherwise, try standard parsing
+    return new Date(dateString);
+  };
+
+  // Helper function to format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = parseDateString(dateString);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString();
+  };
+
   // Helper function to check if loan can be forfeited
   const canForfeitLoan = (loan) => {
     if (!loan || loan.status?.toLowerCase() !== 'active') {
@@ -114,7 +141,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const dueDate = new Date(loan.dueDate);
+    const dueDate = parseDateString(loan.dueDate);
     dueDate.setHours(0, 0, 0, 0);
     
     const isDueDatePassed = dueDate < today;
@@ -134,7 +161,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const dueDate = new Date(loan.dueDate);
+    const dueDate = parseDateString(loan.dueDate);
     dueDate.setHours(0, 0, 0, 0);
     
     const isDueDatePassed = dueDate < today;
@@ -755,7 +782,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                           <strong>ID:</strong> {selectedProfile.idNumber || selectedProfile.idType || 'N/A'}
                         </p>
                         <p style={{ margin: '5px 0', color: '#222', fontWeight: '600' }}>
-                          <strong>Joined:</strong> {selectedProfile.createdAt && new Date(selectedProfile.createdAt).getTime() > 0 ? new Date(selectedProfile.createdAt).toLocaleDateString() : 'N/A'}
+                          <strong>Joined:</strong> {selectedProfile.createdAt ? formatDate(selectedProfile.createdAt) : 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -1131,13 +1158,13 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                       <div>
                         <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Created</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
-                          {new Date(loan.createdAt).toLocaleDateString()}
+                          {formatDate(loan.createdAt)}
                         </p>
                       </div>
                       <div>
                         <p style={{ margin: '0', fontSize: '12px', color: '#555', fontWeight: '600' }}>Due</p>
                         <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
-                          {loan.dueDate ? new Date(loan.dueDate).toLocaleDateString() : 'N/A'}
+                          {loan.dueDate ? formatDate(loan.dueDate) : 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -1403,7 +1430,7 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
                                   <div>
                                     <p style={{ margin: '0', color: '#666', fontSize: '11px' }}>Date</p>
                                     <p style={{ margin: '3px 0 0 0', fontWeight: 'bold' }}>
-                                      {new Date(payment.payment_date).toLocaleString()}
+                                      {parseDateString(payment.payment_date)?.toLocaleString() || 'N/A'}
                                     </p>
                                   </div>
                                 </div>
