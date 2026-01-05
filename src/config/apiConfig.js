@@ -13,7 +13,7 @@ class ApiConfig {
     // If no env var, detect at runtime based on hostname
     if (!baseURL && typeof window !== 'undefined') {
       if (window.location.hostname.includes('railway.app')) {
-        baseURL = 'https://pawn-flow-production.up.railway.app';
+        baseURL = 'https://pawnflow-backend-production.up.railway.app';
       } else if (window.location.hostname.includes('localhost')) {
         baseURL = 'http://localhost:5000';
       }
