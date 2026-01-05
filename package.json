@@ -37,6 +37,7 @@
     "test": "react-scripts test",
     "test:coverage": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
+    "serve": "node serve.js",
     "lint": "eslint src/"
   },
   "eslintConfig": {
