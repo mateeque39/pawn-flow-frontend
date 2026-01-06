@@ -12,14 +12,19 @@ class ApiConfig {
     
     // If no env var, detect at runtime based on hostname
     if (!baseURL && typeof window !== 'undefined') {
-      if (window.location.hostname.includes('railway.app')) {
+      if (window.location.hostname.includes('railway.app') || window.location.hostname.includes('pawnflowsoftware.com')) {
         baseURL = 'https://pawnflow-backend-production.up.railway.app';
       } else if (window.location.hostname.includes('localhost')) {
         baseURL = 'http://localhost:5000';
       }
     }
     
+    // Ensure baseURL has protocol
     this.baseURL = baseURL || 'http://localhost:5000';
+    if (!this.baseURL.startsWith('http://') && !this.baseURL.startsWith('https://')) {
+      this.baseURL = `https://${this.baseURL}`;
+    }
+    
     this.timeout = parseInt(process.env.REACT_APP_API_TIMEOUT, 10) || 30000;
     this.env = process.env.REACT_APP_ENV || 'development';
     
