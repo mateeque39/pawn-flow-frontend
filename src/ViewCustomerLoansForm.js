@@ -618,32 +618,49 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                 {(loan.collateral_image || loan.collateralImage) && (
                   <div style={{ marginTop: '15px', textAlign: 'center' }}>
                     <p style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>📷 Item Photo:</p>
-                    <img 
-                      src={
-                        // If it starts with data:, it's already base64 from database
-                        (loan.collateral_image || loan.collateralImage).startsWith('data:')
-                          ? (loan.collateral_image || loan.collateralImage)
-                          // Otherwise fetch from endpoint
-                          : `/customers/${selectedProfile?.id}/${loan.id}/collateral-image`
-                      }
-                      alt="Collateral Item" 
-                      style={{ 
-                        maxWidth: '200px', 
-                        maxHeight: '250px', 
-                        borderRadius: '6px', 
-                        border: '2px solid #ddd',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => {
-                        const imageData = (loan.collateral_image || loan.collateralImage);
-                        if (imageData.startsWith('data:')) {
-                          window.open(imageData, '_blank');
-                        } else {
-                          window.open(`/customers/${selectedProfile?.id}/${loan.id}/collateral-image`, '_blank');
+                    {(loan.collateral_image || loan.collateralImage).startsWith('blob:') ? (
+                      <div style={{
+                        padding: '15px',
+                        backgroundColor: '#fff3cd',
+                        border: '1px solid #ffc107',
+                        borderRadius: '6px',
+                        color: '#856404',
+                        fontSize: '12px'
+                      }}>
+                        ⚠️ Collateral image has expired. Please re-upload the image to save it permanently.
+                      </div>
+                    ) : (
+                      <img 
+                        src={
+                          // If it starts with data:, it's already base64 from database
+                          (loan.collateral_image || loan.collateralImage).startsWith('data:')
+                            ? (loan.collateral_image || loan.collateralImage)
+                            // Otherwise fetch from endpoint
+                            : `/customers/${selectedProfile?.id}/${loan.id}/collateral-image`
                         }
-                      }}
-                      title="Click to view full size"
-                    />
+                        alt="Collateral Item" 
+                        style={{ 
+                          maxWidth: '200px', 
+                          maxHeight: '250px', 
+                          borderRadius: '6px', 
+                          border: '2px solid #ddd',
+                          cursor: 'pointer'
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = '<div style="padding: 15px; backgroundColor: #f8d7da; border: 1px solid #f5c6cb; borderRadius: 6px; color: #721c24; fontSize: 12px;">⚠️ Could not load image. Please re-upload to save permanently.</div>';
+                        }}
+                        onClick={() => {
+                          const imageData = (loan.collateral_image || loan.collateralImage);
+                          if (imageData.startsWith('data:')) {
+                            window.open(imageData, '_blank');
+                          } else if (!imageData.startsWith('blob:')) {
+                            window.open(`/customers/${selectedProfile?.id}/${loan.id}/collateral-image`, '_blank');
+                          }
+                        }}
+                        title="Click to view full size"
+                      />
+                    )}
                   </div>
                 )}
 
