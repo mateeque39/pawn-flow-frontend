@@ -619,7 +619,13 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                   <div style={{ marginTop: '15px', textAlign: 'center' }}>
                     <p style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>📷 Item Photo:</p>
                     <img 
-                      src={loan.collateral_image || loan.collateralImage} 
+                      src={
+                        // If it starts with data:, it's already base64 from database
+                        (loan.collateral_image || loan.collateralImage).startsWith('data:')
+                          ? (loan.collateral_image || loan.collateralImage)
+                          // Otherwise fetch from endpoint
+                          : `/customers/${selectedProfile?.id}/${loan.id}/collateral-image`
+                      }
                       alt="Collateral Item" 
                       style={{ 
                         maxWidth: '200px', 
@@ -628,7 +634,14 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
                         border: '2px solid #ddd',
                         cursor: 'pointer'
                       }}
-                      onClick={() => window.open(loan.collateral_image || loan.collateralImage, '_blank')}
+                      onClick={() => {
+                        const imageData = (loan.collateral_image || loan.collateralImage);
+                        if (imageData.startsWith('data:')) {
+                          window.open(imageData, '_blank');
+                        } else {
+                          window.open(`/customers/${selectedProfile?.id}/${loan.id}/collateral-image`, '_blank');
+                        }
+                      }}
                       title="Click to view full size"
                     />
                   </div>
