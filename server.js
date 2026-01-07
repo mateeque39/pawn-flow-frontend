@@ -401,12 +401,12 @@ app.post('/create-loan', async (req, res) => {
       `INSERT INTO loans (
         first_name, last_name, email, home_phone, mobile_phone, birthdate,
         id_type, id_number, referral, identification_info, street_address, city, state, zipcode,
-        customer_number, loan_amount, interest_rate, interest_amount, total_payable_amount,
+        customer_number, loan_amount, interest_rate, interest_amount, total_payable_amount, recurring_fee,
         item_category, item_description, collateral_description, collateral_image, customer_note, transaction_number,
         loan_issued_date, loan_term, due_date,
         status, remaining_balance, created_by, created_by_user_id, created_by_username, customer_name
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
       RETURNING *`,
       [
         first_name,
@@ -428,6 +428,7 @@ app.post('/create-loan', async (req, res) => {
         interestRate,
         calculatedInterestAmount,
         calculatedTotalPayableAmount,
+        calculatedRecurringFee,
         item_category || null,
         item_description || null,
         collateral_description || null,
@@ -1789,12 +1790,12 @@ app.post('/customers/:customerId/loans', async (req, res) => {
       `INSERT INTO loans (
         customer_id, first_name, last_name, email, home_phone, mobile_phone, birthdate,
         id_type, id_number, referral, identification_info, street_address, city, state, zipcode,
-        customer_number, loan_amount, interest_rate, interest_amount, total_payable_amount,
+        customer_number, loan_amount, interest_rate, interest_amount, total_payable_amount, recurring_fee,
         item_category, item_description, collateral_description, collateral_image, customer_note, transaction_number,
         loan_issued_date, loan_term, due_date,
         status, remaining_balance, created_by, created_by_user_id, created_by_username, customer_name
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
       RETURNING *`,
       [
         customerIdNum,
@@ -1817,6 +1818,7 @@ app.post('/customers/:customerId/loans', async (req, res) => {
         interestRate,
         calculatedInterestAmount,
         calculatedTotalPayableAmount,
+        calculatedRecurringFee,
         item_category || null,
         item_description || null,
         collateral_description || null,
