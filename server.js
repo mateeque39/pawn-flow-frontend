@@ -2983,7 +2983,7 @@ app.get('/cash-report', async (req, res) => {
               0 as fees
        FROM loans l
        WHERE DATE(l.updated_at) = $1 AND l.status = 'active' AND DATE(l.loan_issued_date) != $1`,
-      [dateStr, dateStr]
+      [dateStr]
     );
 
     const extensions = {
