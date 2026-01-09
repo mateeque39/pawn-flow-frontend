@@ -56,12 +56,10 @@ const CollateralImageCapture = ({ onImageCapture, onCancel }) => {
       // Draw video frame to canvas
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
 
-      // Get image as blob
-      canvasRef.current.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        setPreviewImage(url);
-        stopWebcam();
-      }, 'image/jpeg', 0.95);
+      // Convert canvas to base64 data URL (permanent, not temporary blob)
+      const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.95);
+      setPreviewImage(base64Image);
+      stopWebcam();
     }
   };
 

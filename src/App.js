@@ -8,7 +8,7 @@ import ShiftManagement from './ShiftManagement';
 import CashReport from './CashReport';
 import CreateCustomerProfileForm from './CreateCustomerProfileForm';
 import ManageCustomerProfileForm from './ManageCustomerProfileForm';
-import UpdateCustomerForm from './UpdateCustomerForm';
+import EditLoanForm from './EditLoanForm';
 import PDFSettingsForm from './PDFSettingsForm';
 import ErrorBoundary from './ErrorBoundary'; // Import the ErrorBoundary component
 
@@ -443,7 +443,7 @@ function App() {
             <ErrorBoundary>
               {selectedOption === 'create-profile' && <CreateCustomerProfileForm loggedInUser={loggedInUser} />}
               {selectedOption === 'manage-profile' && <ManageCustomerProfileForm loggedInUser={loggedInUser} />}
-              {selectedOption === 'edit-loan' && <UpdateCustomerForm loggedInUser={loggedInUser} />}
+              {selectedOption === 'edit-loan' && <EditLoanForm loggedInUser={loggedInUser} />}
               {selectedOption === 'pdf-settings' && <PDFSettingsForm loggedInUser={loggedInUser} />}
               {selectedOption === 'shift-management' && <ShiftManagement userId={loggedInUser?.id} />}
               {selectedOption === 'cash-report' && <CashReport loggedInUser={loggedInUser} />}
