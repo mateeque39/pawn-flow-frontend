@@ -37,46 +37,40 @@ const UpdateCustomerForm = ({ loggedInUser }) => {
 
       const loan = response?.data || response;
 
-      // Helper function to get field value with multiple fallbacks
-      const getFieldValue = (obj, ...keys) => {
-        for (const key of keys) {
-          if (obj && obj[key] !== undefined && obj[key] !== null && obj[key] !== '') {
-            return obj[key];
-          }
-        }
-        return '';
+      // Extract customer data from loan - backend returns nested customerInfo object
+      const customerInfo = loan.customerInfo || {};
+      
+      const customerDataObj = {
+        loanId: loan.id,
+        transactionNumber: loan.transactionNumber || searchId,
+        firstName: customerInfo.firstName || '',
+        lastName: customerInfo.lastName || '',
+        homePhone: customerInfo.homePhone || '',
+        mobilePhone: customerInfo.mobilePhone || '',
+        email: customerInfo.email || '',
+        birthdate: customerInfo.birthdate || '',
+        referral: customerInfo.referral || '',
+        streetAddress: customerInfo.streetAddress || '',
+        city: customerInfo.city || '',
+        state: customerInfo.state || '',
+        zipcode: customerInfo.zipcode || ''
       };
 
-      // Extract customer data from loan with multiple field name variations
-      setCustomerData({
-        loanId: getFieldValue(loan, 'id', 'loan_id', 'loanId'),
-        transactionNumber: getFieldValue(loan, 'transactionNumber', 'transaction_number', 'txn_number') || searchId,
-        firstName: getFieldValue(loan, 'firstName', 'first_name', 'firstname'),
-        lastName: getFieldValue(loan, 'lastName', 'last_name', 'lastname'),
-        homePhone: getFieldValue(loan, 'homePhone', 'home_phone'),
-        mobilePhone: getFieldValue(loan, 'mobilePhone', 'mobile_phone', 'phone'),
-        email: getFieldValue(loan, 'email'),
-        birthdate: getFieldValue(loan, 'birthdate', 'date_of_birth', 'dob'),
-        referral: getFieldValue(loan, 'referral', 'referred_by', 'referredBy'),
-        streetAddress: getFieldValue(loan, 'streetAddress', 'street_address', 'address_street'),
-        city: getFieldValue(loan, 'city', 'city_name'),
-        state: getFieldValue(loan, 'state', 'state_code'),
-        zipcode: getFieldValue(loan, 'zipcode', 'zip_code', 'postal_code')
-      });
+      setCustomerData(customerDataObj);
 
       // Initialize form with customer data
       setFormData({
-        firstName: getFieldValue(loan, 'firstName', 'first_name', 'firstname'),
-        lastName: getFieldValue(loan, 'lastName', 'last_name', 'lastname'),
-        homePhone: getFieldValue(loan, 'homePhone', 'home_phone'),
-        mobilePhone: getFieldValue(loan, 'mobilePhone', 'mobile_phone', 'phone'),
-        email: getFieldValue(loan, 'email'),
-        birthdate: getFieldValue(loan, 'birthdate', 'date_of_birth', 'dob'),
-        referral: getFieldValue(loan, 'referral', 'referred_by', 'referredBy'),
-        streetAddress: getFieldValue(loan, 'streetAddress', 'street_address', 'address_street'),
-        city: getFieldValue(loan, 'city', 'city_name'),
-        state: getFieldValue(loan, 'state', 'state_code'),
-        zipcode: getFieldValue(loan, 'zipcode', 'zip_code', 'postal_code')
+        firstName: customerDataObj.firstName,
+        lastName: customerDataObj.lastName,
+        homePhone: customerDataObj.homePhone,
+        mobilePhone: customerDataObj.mobilePhone,
+        email: customerDataObj.email,
+        birthdate: customerDataObj.birthdate,
+        referral: customerDataObj.referral,
+        streetAddress: customerDataObj.streetAddress,
+        city: customerDataObj.city,
+        state: customerDataObj.state,
+        zipcode: customerDataObj.zipcode
       });
 
       setEditMode(false);
