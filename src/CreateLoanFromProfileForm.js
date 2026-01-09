@@ -4,6 +4,7 @@ import { http } from './services/httpClient';
 import { parseError, getErrorMessage } from './services/errorHandler';
 import logger from './services/logger';
 import SearchCustomerProfileForm from './SearchCustomerProfileForm';
+import CollateralImageCapture from './CollateralImageCapture';
 
 const CreateLoanFromProfileForm = ({ loggedInUser }) => {
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -12,6 +13,8 @@ const CreateLoanFromProfileForm = ({ loggedInUser }) => {
   const [interestAmount, setInterestAmount] = useState('');
   const [totalPayableAmount, setTotalPayableAmount] = useState('');
   const [collateralDescription, setCollateralDescription] = useState('');
+  const [collateralImage, setCollateralImage] = useState(null);
+  const [showImageCapture, setShowImageCapture] = useState(false);
   const [customerNote, setCustomerNote] = useState('');
   const [loanTerm, setLoanTerm] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -24,7 +27,12 @@ const CreateLoanFromProfileForm = ({ loggedInUser }) => {
   // Initialize transaction number and date when component mounts
   React.useEffect(() => {
     setTransactionNumber(Math.floor(Math.random() * 1000000000));
-    const currentDate = new Date().toISOString().split('T')[0];
+    // Use local date, not UTC
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const currentDate = `${year}-${month}-${day}`;
     setLoanIssuedDate(currentDate);
   }, []);
 

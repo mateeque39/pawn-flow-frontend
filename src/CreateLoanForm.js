@@ -51,8 +51,12 @@ const CreateLoanForm = ({ loggedInUser }) => {
     // Generate a random transaction number
     setTransactionNumber(Math.floor(Math.random() * 1000000000)); // Example random number
 
-    // Set the current date as the loan issued date
-    const currentDate = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
+    // Set the current date as the loan issued date (use local date, not UTC)
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const currentDate = `${year}-${month}-${day}`; // Format YYYY-MM-DD
     setLoanIssuedDate(currentDate);
   }, []);
 
