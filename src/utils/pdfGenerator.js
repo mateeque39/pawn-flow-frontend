@@ -274,8 +274,13 @@ export const generateLoanPDFSync = (loanData, options = {}) => {
   const itemCategory = loanData.item_category || loanData.itemCategory || settings.categoryDefaultText;
   const itemDescription = loanData.collateral_description || loanData.collateralDescription || loanData.item_description || loanData.itemDescription || settings.itemDescriptionTemplate;
   
+  // Use splitTextToSize for multi-line text wrapping in the description column
+  const descMaxWidth = colWidths.description - 4;
+  const descriptionLines = doc.splitTextToSize(itemDescription, descMaxWidth);
+  const cellHeight = descriptionLines.length > 1 ? 4 + (descriptionLines.length * 3) : 7;
+  
   doc.text(itemCategory, margin + colWidths.item + 2, yPosition);
-  doc.text(itemDescription, margin + colWidths.item + colWidths.category + 2, yPosition);
+  doc.text(descriptionLines, margin + colWidths.item + colWidths.category + 2, yPosition);
 
   const totalPayable = loanData.total_payable_amount || loanData.totalPayableAmount || loanAmount;
   doc.text(`$${parseFloat(totalPayable).toFixed(2)}`, margin + colWidths.item + colWidths.category + colWidths.description + 2, yPosition);
