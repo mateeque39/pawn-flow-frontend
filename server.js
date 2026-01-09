@@ -2557,7 +2557,7 @@ app.post('/start-shift', async (req, res) => {
   const { userId, openingBalance } = req.body;
 
   try {
-    if (!openingBalance || openingBalance < 0) {
+    if (openingBalance === null || openingBalance === undefined || openingBalance < 0) {
       return res.status(400).json({ message: 'Invalid opening balance' });
     }
 

@@ -114,7 +114,7 @@ const ShiftManagement = ({ userId = 1 }) => {
   };
 
   const handleStartShift = async () => {
-    if (!openingBalance || parseFloat(openingBalance) < 0) {
+    if (openingBalance === '' || openingBalance === null || openingBalance === undefined || parseFloat(openingBalance) < 0) {
       setMessage('Please enter a valid opening balance');
       setMessageType('error');
       return;
