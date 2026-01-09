@@ -170,7 +170,7 @@ const ShiftManagement = ({ userId = 1 }) => {
   };
 
   const handleEndShift = async () => {
-    if (!closingBalance || parseFloat(closingBalance) < 0) {
+    if (closingBalance === '' || closingBalance === null || closingBalance === undefined || parseFloat(closingBalance) < 0) {
       setMessage('Please enter a valid closing balance');
       setMessageType('error');
       return;
