@@ -1949,6 +1949,57 @@ app.post('/customers/:customerId/loans', async (req, res) => {
     // Generate or use provided transaction number
     const transactionNumber = inputTransactionNumber || Math.floor(Math.random() * 1000000000).toString();
 
+    // ===== CHECK AVAILABLE CASH IN STORE BEFORE CREATING LOAN =====
+    // Get current active shift for this user
+    const currentShiftResult = await pool.query(
+      'SELECT * FROM shift_management WHERE user_id = $1 AND shift_end_time IS NULL ORDER BY id DESC LIMIT 1',
+      [createdByUserId || userId]
+    );
+
+    if (currentShiftResult.rows.length > 0) {
+      const shift = currentShiftResult.rows[0];
+      const openingBalance = parseFloat(shift.opening_balance) || 0;
+      
+      // Get all loans created in this shift (money gone OUT of store)
+      const loansInShiftResult = await pool.query(
+        `SELECT COALESCE(SUM(loan_amount), 0) as total_loans_out 
+         FROM loans 
+         WHERE created_by_user_id = $1 
+         AND DATE(created_at) = DATE($2)`,
+        [createdByUserId || userId, new Date()]
+      );
+      const loansOut = parseFloat(loansInShiftResult.rows[0]?.total_loans_out || 0);
+
+      // Get all payments made in this shift (money coming IN to store)
+      const paymentsInShiftResult = await pool.query(
+        `SELECT COALESCE(SUM(amount), 0) as total_payments_in 
+         FROM payment_history 
+         WHERE created_by_user_id = $1 
+         AND DATE(created_at) = DATE($2)`,
+        [createdByUserId || userId, new Date()]
+      );
+      const paymentsIn = parseFloat(paymentsInShiftResult.rows[0]?.total_payments_in || 0);
+
+      // Calculate available balance
+      const currentBalance = openingBalance + paymentsIn - loansOut;
+      
+      // Check if there's enough cash to give this loan
+      if (totalLoanAmount > currentBalance) {
+        return res.status(400).json({
+          message: `❌ Insufficient store cash! Available: $${currentBalance.toFixed(2)}, Requested: $${totalLoanAmount.toFixed(2)}`,
+          details: {
+            openingBalance: openingBalance,
+            paymentsIn: paymentsIn,
+            loansOut: loansOut,
+            availableBalance: currentBalance,
+            requestedAmount: totalLoanAmount,
+            shortfallAmount: (totalLoanAmount - currentBalance).toFixed(2)
+          }
+        });
+      }
+    }
+    // ===== END CASH CHECK =====
+
     // Insert loan linked to customer profile
     const result = await pool.query(
       `INSERT INTO loans (
