@@ -2975,15 +2975,15 @@ app.get('/cash-report', async (req, res) => {
       total: parseFloat(partialPaymentsResult.rows[0].total) || 0
     };
 
-    // Extensions
+    // Extensions (loans renewed/extended, not new loans created today)
     const extensionsResult = await pool.query(
       `SELECT COUNT(*) as qty,
               COALESCE(SUM(l.loan_amount), 0) as principal,
               COALESCE(SUM(l.interest_amount), 0) as interest,
               0 as fees
        FROM loans l
-       WHERE DATE(l.created_at) = $1 AND l.status = 'active'`,
-      [dateStr]
+       WHERE DATE(l.updated_at) = $1 AND l.status = 'active' AND DATE(l.loan_issued_date) != $1`,
+      [dateStr, dateStr]
     );
 
     const extensions = {
