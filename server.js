@@ -29,8 +29,7 @@ const cron = require('node-cron');
 cron.schedule('0 0 * * *', async () => {  
   try {
     const result = await pool.query(
-      'SELECT * FROM loans WHERE due_date < CURRENT_DATE AND status = $1',
-      ['active']
+      `SELECT * FROM loans WHERE due_date < CURRENT_DATE AND status IN ('active', 'overdue')`
     );
 
     const loansDue = result.rows;
@@ -42,32 +41,27 @@ cron.schedule('0 0 * * *', async () => {
       );
       const totalPaid = paymentResult.rows[0].total_paid || 0;
 
-      if (totalPaid >= loan.interest_amount) {
-        // Extend the due date by 30 days and apply next-cycle interest
-        const extendedDueDate = new Date(loan.due_date);
-        extendedDueDate.setDate(extendedDueDate.getDate() + 30);  // Extend by 30 days
+      const principal = parseFloat(loan.loan_amount) || 0;
+      const rate = parseFloat(loan.interest_rate) || 0;
+      const nextInterest = parseFloat(((principal * rate) / 100).toFixed(2));
+      const currentRemaining = parseFloat(loan.remaining_balance) || 0;
+      const newRemaining = parseFloat((currentRemaining + nextInterest).toFixed(2));
+      const newTotalPayable = parseFloat((principal + nextInterest).toFixed(2));
+      const extendedDueDate = new Date(loan.due_date);
+      extendedDueDate.setDate(extendedDueDate.getDate() + 30);
 
-        // Calculate next-cycle interest based on principal and interest rate
-        const principal = parseFloat(loan.loan_amount) || 0;
-        const rate = parseFloat(loan.interest_rate) || 0;
-        const nextInterest = parseFloat(((principal * rate) / 100).toFixed(2));
-
-        // New totals: interest_amount becomes the next-cycle interest
-        const newTotalPayable = parseFloat((principal + nextInterest).toFixed(2));
-
-        // Remaining balance should accrue the new interest (so paying interest to extend doesn't permanently reduce balance)
-        const currentRemaining = parseFloat(loan.remaining_balance) || 0;
-        const newRemaining = parseFloat((currentRemaining + nextInterest).toFixed(2));
-
+      if (loan.status === 'active' && totalPaid >= loan.interest_amount) {
+        // Active loan with required interest paid: extend and apply next-cycle interest
         await pool.query(
           `UPDATE loans SET due_date = $1, interest_amount = $2, total_payable_amount = $3, remaining_balance = $4 WHERE id = $5 RETURNING *`,
           [extendedDueDate.toISOString().slice(0, 10), nextInterest, newTotalPayable, newRemaining, loan.id]
         );
       } else {
-        // If interest is not paid, mark the loan as overdue
+        // Overdue loan or active loan without required interest paid:
+        // mark overdue and accrue interest for the next cycle
         await pool.query(
-          'UPDATE loans SET status = $1 WHERE id = $2 RETURNING *',
-          ['overdue', loan.id]
+          `UPDATE loans SET status = $1, due_date = $2, interest_amount = $3, total_payable_amount = $4, remaining_balance = $5 WHERE id = $6 RETURNING *`,
+          ['overdue', extendedDueDate.toISOString().slice(0, 10), nextInterest, newTotalPayable, newRemaining, loan.id]
         );
       }
     }
@@ -244,8 +238,7 @@ app.post('/add-money', async (req, res) => {
 app.post('/check-due-date', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM loans WHERE due_date < CURRENT_DATE AND status = $1',
-      ['active']
+      `SELECT * FROM loans WHERE due_date < CURRENT_DATE AND status IN ('active', 'overdue')`
     );
 
     const loansDue = result.rows;
@@ -257,20 +250,35 @@ app.post('/check-due-date', async (req, res) => {
       );
       const totalPaid = paymentResult.rows[0].total_paid || 0;
 
-      if (totalPaid >= loan.interest_amount) {
-        // If interest is paid, extend due date by 30 days
-        const extendedDueDate = new Date(loan.due_date);
-        extendedDueDate.setDate(extendedDueDate.getDate() + 30);
+      const principal = parseFloat(loan.loan_amount) || 0;
+      const rate = parseFloat(loan.interest_rate) || 0;
+      const nextInterest = parseFloat(((principal * rate) / 100).toFixed(2));
+      const currentRemaining = parseFloat(loan.remaining_balance) || 0;
+      const newRemaining = parseFloat((currentRemaining + nextInterest).toFixed(2));
+      const newTotalPayable = parseFloat((principal + nextInterest).toFixed(2));
+      const extendedDueDate = new Date(loan.due_date);
+      extendedDueDate.setDate(extendedDueDate.getDate() + 30);
 
+      if (loan.status === 'active' && totalPaid >= loan.interest_amount) {
         await pool.query(
-          'UPDATE loans SET due_date = $1 WHERE id = $2 RETURNING *',
-          [extendedDueDate.toISOString().slice(0, 10), loan.id]
+          `UPDATE loans
+           SET due_date = $1,
+               interest_amount = $2,
+               total_payable_amount = $3,
+               remaining_balance = $4
+           WHERE id = $5 RETURNING *`,
+          [extendedDueDate.toISOString().slice(0, 10), nextInterest, newTotalPayable, newRemaining, loan.id]
         );
       } else {
-        // If interest is not paid, mark the loan as overdue
         await pool.query(
-          'UPDATE loans SET status = $1 WHERE id = $2 RETURNING *',
-          ['overdue', loan.id]
+          `UPDATE loans
+           SET status = $1,
+               due_date = $2,
+               interest_amount = $3,
+               total_payable_amount = $4,
+               remaining_balance = $5
+           WHERE id = $6 RETURNING *`,
+          ['overdue', extendedDueDate.toISOString().slice(0, 10), nextInterest, newTotalPayable, newRemaining, loan.id]
         );
       }
     }

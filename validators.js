@@ -80,6 +80,11 @@ function formatLoanResponse(loan) {
     customerName: loan.customer_name || null,
     createdAt: loan.created_at || null,
     updatedAt: loan.updated_at || null,
+    isOverdue: false,
+    daysOverdue: 0,
+    monthsOverdue: 0,
+    overdueCycles: 0,
+    statusDisplay: loan.status ? loan.status.toUpperCase() : 'ACTIVE'
   };
 }
 
