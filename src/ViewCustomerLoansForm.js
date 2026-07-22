@@ -110,7 +110,17 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
         
         const totalPayable = parseFloat(loan.total_payable_amount || loan.totalPayableAmount || 0);
         const balance = parseFloat(loan.remaining_balance || loan.remainingBalance || 0);
-        
+        const dueDateValue = loan.due_date || loan.dueDate || null;
+        const dueDateObj = dueDateValue ? new Date(dueDateValue) : null;
+        const dueDateValid = dueDateObj instanceof Date && !Number.isNaN(dueDateObj.getTime());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const statusLower = String(loan.status || '').toLowerCase();
+        const isPastDue = dueDateValid && dueDateObj < today;
+        const isOverdue = statusLower === 'overdue' || (isPastDue && statusLower !== 'redeemed' && statusLower !== 'forfeited');
+        const daysOverdue = isOverdue ? Math.max(0, Math.floor((today.getTime() - dueDateObj.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+        const monthsOverdue = isOverdue ? Math.ceil(daysOverdue / 30) : 0;
+
         return {
           id: loan.id,
           loanAmount: amount,
@@ -119,20 +129,13 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
           totalPayableAmount: totalPayable,
           remainingBalance: balance,
           createdAt: loan.loan_issued_date || loan.createdAt || loan.created_at,
-          dueDate: loan.due_date || loan.dueDate,
+          dueDate: dueDateValue,
           status: loan.status,
-          transactionNumber: loan.transaction_number || loan.transactionNumber,
-          itemDescription: loan.item_description || loan.itemDescription,
-          ...loan
-        };
-      };
-
-      if (response?.data) {
-        // If backend returns grouped format (activeLoans, redeemedLoans, etc.)
-        // Check if properties exist (don't use || because empty arrays are falsy!)
-        if ('activeLoans' in response.data && 'overdueLoans' in response.data) {
-          categorized = {
-            active: (response.data.activeLoans || []).map(normalizeLoan),
+          statusDisplay: isOverdue ? 'OVERDUE' : (loan.status ? loan.status.toUpperCase() : 'ACTIVE'),
+          isOverdue,
+          daysOverdue,
+          monthsOverdue,
+          overdueCycles: monthsOverdue,
             redeemed: (response.data.redeemedLoans || []).map(normalizeLoan),
             forfeited: (response.data.forfeitedLoans || []).map(normalizeLoan),
             overdue: (response.data.overdueLoans || []).map(normalizeLoan),
