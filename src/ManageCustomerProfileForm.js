@@ -4,6 +4,7 @@ import apiConfig from './config/apiConfig';
 import { parseError, getErrorMessage } from './services/errorHandler';
 import logger from './services/logger';
 import CollateralImageCapture from './CollateralImageCapture';
+import { generateLoanPDFAsBase64 } from './utils/pdfGenerator';
 
 const ManageCustomerProfileForm = ({ loggedInUser }) => {
   const [searchType, setSearchType] = useState('phone');
@@ -622,10 +623,25 @@ const ManageCustomerProfileForm = ({ loggedInUser }) => {
         setTimeout(() => downloadLoanPDF(result.loan.id), 500);
       }
 
-      // Auto-download receipt when a payment is completed successfully
-      if (operationType === 'payment' && result?.receiptPDF) {
-        console.log('[ManageCustomerProfileForm] Payment response has receiptPDF, auto-downloading');
-        handleDownloadReceiptFromBase64(result.receiptPDF, selectedLoan || result.loan);
+      // Generate and auto-download receipt when a payment is completed successfully
+      if (operationType === 'payment') {
+        try {
+          const pdfResult = await generateLoanPDFAsBase64(result.loan, {
+            paymentAmount: loanFormData.paymentAmount,
+            paymentMethod: loanFormData.paymentMethod,
+            paymentDate: new Date().toLocaleDateString()
+          });
+          
+          if (pdfResult.success && pdfResult.base64) {
+            console.log('[ManageCustomerProfileForm] Payment receipt PDF generated, auto-downloading');
+            handleDownloadReceiptFromBase64(pdfResult.base64, result.loan);
+            logger.info('Receipt PDF generated successfully after payment', { loanId: selectedLoan?.id });
+          }
+        } catch (pdfError) {
+          console.error('Error generating receipt PDF:', pdfError);
+          logger.error('Error generating receipt PDF after payment', pdfError);
+          // Don't fail the payment if PDF generation fails
+        }
       }
     } catch (error) {
       const parsedError = error.parsedError || parseError(error);
