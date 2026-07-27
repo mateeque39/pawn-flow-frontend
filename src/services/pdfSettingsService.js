@@ -94,4 +94,5 @@ class PDFSettingsService {
   }
 }
 
-export default new PDFSettingsService();
+const pdfSettingsService = new PDFSettingsService();
+export default pdfSettingsService;
