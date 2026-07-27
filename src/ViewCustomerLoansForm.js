@@ -50,161 +50,98 @@ const ViewCustomerLoansForm = ({ loggedInUser }) => {
   };
 
   const handleProfileSelect = async (profile) => {
-    console.log('🔴 FRESH CODE v2 - handleProfileSelect called for customer:', profile.id);
-    // Normalize profile data to handle different field naming conventions from backend
+    // Normalize profile
     const normalizedProfile = {
       id: getFieldValue(profile, 'id', 'customerId', 'customer_id') || profile.id,
-      firstName: getFieldValue(profile, 'firstName', 'first_name', 'firstname') || 'N/A',
-      lastName: getFieldValue(profile, 'lastName', 'last_name', 'lastname') || 'N/A',
-      homePhone: getFieldValue(profile, 'homePhone', 'home_phone', 'phone') || '',
-      mobilePhone: getFieldValue(profile, 'mobilePhone', 'mobile_phone', 'mobile') || '',
-      email: getFieldValue(profile, 'email', 'email_address') || '',
-      streetAddress: getFieldValue(profile, 'streetAddress', 'street_address', 'address_street', 'street') || '',
-      city: getFieldValue(profile, 'city', 'city_name') || '',
-      state: getFieldValue(profile, 'state', 'state_code') || '',
-      zipcode: getFieldValue(profile, 'zipcode', 'zip_code', 'postal_code') || '',
-      birthdate: getFieldValue(profile, 'birthdate', 'birth_date', 'dateOfBirth', 'date_of_birth') || '',
-      idType: getFieldValue(profile, 'idType', 'id_type', 'identificationType') || '',
-      idNumber: getFieldValue(profile, 'idNumber', 'id_number', 'identification_number') || '',
-      createdAt: getFieldValue(profile, 'createdAt', 'created_at') || new Date().toISOString()
+      firstName: getFieldValue(profile, 'firstName', 'first_name') || profile.firstName || profile.first_name || 'N/A',
+      lastName: getFieldValue(profile, 'lastName', 'last_name') || profile.lastName || profile.last_name || 'N/A',
+      homePhone: getFieldValue(profile, 'homePhone', 'home_phone') || '',
+      mobilePhone: getFieldValue(profile, 'mobilePhone', 'mobile_phone') || '',
+      email: getFieldValue(profile, 'email') || '',
+      streetAddress: getFieldValue(profile, 'streetAddress', 'street_address') || '',
+      city: getFieldValue(profile, 'city') || '',
+      state: getFieldValue(profile, 'state') || '',
+      zipcode: getFieldValue(profile, 'zipcode') || '',
     };
 
     setSelectedProfile(normalizedProfile);
     setLoading(true);
+
     try {
-      logger.info(`Fetching loans for customer ${profile.id}...`);
-      
-      // Fetch all loans for this customer
-      const response = await http.get(`/customers/${profile.id}/loans`, {
-        params: { _ts: Date.now() }
-      });
+      logger.info(`Fetching loans for customer ${normalizedProfile.id}...`);
+      const response = await http.get(`/customers/${normalizedProfile.id}/loans`, { params: { _ts: Date.now() } });
 
-      console.log('DEBUG: Full API Response:', JSON.stringify(response.data, null, 2));
-      
-      logger.info('API response received', { 
-        activeLoans: response.data?.activeLoans?.length, 
-        redeemedLoans: response.data?.redeemedLoans?.length,
-        forfeitedLoans: response.data?.forfeitedLoans?.length,
-        overdueLoans: response.data?.overdueLoans?.length,
-        hasData: !!response?.data
-      });
-
-      // Backend already returns categorized loans
-      let categorized = {
-        active: [],
-        redeemed: [],
-        forfeited: [],
-        extended: []
-      };
-
-      // Helper to normalize loan field names
+      // Helper to normalize a single loan record
       const normalizeLoan = (loan) => {
         const amount = parseFloat(loan.loan_amount || loan.loanAmount || 0);
         const rate = parseFloat(loan.interest_rate || loan.interestRate || 0);
         let interest = parseFloat(loan.interest_amount || loan.interestAmount || 0);
-        
-        // If interest_amount is not provided by backend, calculate it
-        if (interest === 0 && amount > 0 && rate > 0) {
-          interest = (amount * rate) / 100;
+        if ((!interest || interest === 0) && amount > 0 && rate > 0) {
+          interest = parseFloat(((amount * rate) / 100).toFixed(2));
         }
-        
-        const totalPayable = parseFloat(loan.total_payable_amount || loan.totalPayableAmount || 0);
-        const balance = parseFloat(loan.remaining_balance || loan.remainingBalance || 0);
-        
+
+        const dueDateVal = loan.due_date || loan.dueDate || null;
+        const dueDateObj = dueDateVal ? new Date(dueDateVal) : null;
+        const today = new Date(); today.setHours(0,0,0,0);
+        const isPastDue = dueDateObj instanceof Date && !Number.isNaN(dueDateObj.getTime()) && dueDateObj < today;
+        const statusLower = String(loan.status || '').toLowerCase();
+        const isOverdue = statusLower === 'overdue' || (isPastDue && statusLower !== 'redeemed' && statusLower !== 'forfeited');
+        const daysOverdue = isOverdue ? Math.max(0, Math.floor((today.getTime() - dueDateObj.getTime()) / (1000*60*60*24))) : 0;
+        const monthsOverdue = isOverdue ? Math.ceil(daysOverdue / 30) : 0;
+
         return {
+          ...loan,
           id: loan.id,
           loanAmount: amount,
           interestRate: rate,
           interestAmount: interest,
-          totalPayableAmount: totalPayable,
-          remainingBalance: balance,
-          createdAt: loan.loan_issued_date || loan.createdAt || loan.created_at,
-          dueDate: loan.due_date || loan.dueDate,
-          status: loan.status,
-          transactionNumber: loan.transaction_number || loan.transactionNumber,
-          itemDescription: loan.item_description || loan.itemDescription,
-          ...loan
+          remainingBalance: parseFloat(loan.remaining_balance || loan.remainingBalance || 0),
+          dueDate: dueDateVal,
+          isOverdue,
+          daysOverdue,
+          monthsOverdue,
+          statusDisplay: isOverdue ? 'OVERDUE' : (loan.status ? loan.status.toUpperCase() : 'ACTIVE')
         };
       };
 
-      if (response?.data) {
-        // If backend returns grouped format (activeLoans, redeemedLoans, etc.)
-        // Check if properties exist (don't use || because empty arrays are falsy!)
-        if ('activeLoans' in response.data && 'overdueLoans' in response.data) {
-          categorized = {
-            active: (response.data.activeLoans || []).map(normalizeLoan),
-            redeemed: (response.data.redeemedLoans || []).map(normalizeLoan),
-            forfeited: (response.data.forfeitedLoans || []).map(normalizeLoan),
-            overdue: (response.data.overdueLoans || []).map(normalizeLoan),
-            extended: [] // Backend doesn't have separate 'extended' status
-          };
-        } else {
-          // Fallback: if response is flat array, categorize it
-          const loans = Array.isArray(response.data) ? response.data : [];
-          categorized = {
-            active: loans.filter(l => l.status === 'active' || l.status === 'ACTIVE').map(normalizeLoan),
-            redeemed: loans.filter(l => l.status === 'redeemed' || l.status === 'REDEEMED').map(normalizeLoan),
-            forfeited: loans.filter(l => l.status === 'forfeited' || l.status === 'FORFEITED').map(normalizeLoan),
-            overdue: loans.filter(l => l.status === 'overdue' || l.status === 'OVERDUE').map(normalizeLoan),
-            extended: loans.filter(l => l.status === 'extended' || l.status === 'EXTENDED').map(normalizeLoan)
-          };
-        }
+      let categorized = { active: [], redeemed: [], forfeited: [], overdue: [], extended: [] };
+
+      // If backend returned categorized arrays, use them (normalize each entry)
+      if (response.data && (response.data.activeLoans || response.data.overdueLoans || response.data.redeemedLoans)) {
+        categorized.active = (response.data.activeLoans || []).map(normalizeLoan);
+        categorized.redeemed = (response.data.redeemedLoans || []).map(normalizeLoan);
+        categorized.forfeited = (response.data.forfeitedLoans || []).map(normalizeLoan);
+        categorized.overdue = (response.data.overdueLoans || []).map(normalizeLoan);
+        categorized.extended = (response.data.extendedLoans || []).map(normalizeLoan);
+      } else {
+        // Fallback: response is a flat array
+        const loans = Array.isArray(response.data) ? response.data : (response.data?.loans || []);
+        const normalized = loans.map(normalizeLoan);
+        categorized.active = normalized.filter(l => !l.isOverdue && String(l.status || '').toLowerCase() !== 'redeemed' && String(l.status || '').toLowerCase() !== 'forfeited');
+        categorized.overdue = normalized.filter(l => l.isOverdue);
+        categorized.redeemed = normalized.filter(l => String(l.status || '').toLowerCase() === 'redeemed');
+        categorized.forfeited = normalized.filter(l => String(l.status || '').toLowerCase() === 'forfeited');
       }
 
       setProfileLoans(categorized);
-      
-      console.log('DEBUG: Categorized loans:', {
-        active: categorized.active?.length || 0,
-        redeemed: categorized.redeemed?.length || 0,
-        forfeited: categorized.forfeited?.length || 0,
-        overdue: categorized.overdue?.length || 0,
-        extended: categorized.extended?.length || 0
-      });
-      
-      logger.info('Loans categorized successfully', {
-        active: categorized.active.length,
-        redeemed: categorized.redeemed.length,
-        forfeited: categorized.forfeited.length,
-        overdue: categorized.overdue.length,
-        extended: categorized.extended.length
-      });
-      
-      // Extract address information from the first available loan
-      const allLoans = [
-        ...(categorized.active || []),
-        ...(categorized.redeemed || []),
-        ...(categorized.forfeited || []),
-        ...(categorized.overdue || []),
-        ...(categorized.extended || [])
-      ];
-      
+
+      // Populate address from first loan if missing
+      const allLoans = [...categorized.active, ...categorized.redeemed, ...categorized.forfeited, ...categorized.overdue, ...categorized.extended];
       if (allLoans.length > 0) {
         const firstLoan = allLoans[0];
-        // Update the profile with address info from the loan if not already present
-        if (!normalizedProfile.streetAddress || normalizedProfile.streetAddress === '') {
-          normalizedProfile.streetAddress = firstLoan.street_address || firstLoan.streetAddress || '';
-        }
-        if (!normalizedProfile.city || normalizedProfile.city === '') {
-          normalizedProfile.city = firstLoan.city || '';
-        }
-        if (!normalizedProfile.state || normalizedProfile.state === '') {
-          normalizedProfile.state = firstLoan.state || '';
-        }
-        if (!normalizedProfile.zipcode || normalizedProfile.zipcode === '') {
-          normalizedProfile.zipcode = firstLoan.zipcode || '';
-        }
+        if (!normalizedProfile.streetAddress) normalizedProfile.streetAddress = firstLoan.street_address || firstLoan.streetAddress || '';
+        if (!normalizedProfile.city) normalizedProfile.city = firstLoan.city || '';
+        if (!normalizedProfile.state) normalizedProfile.state = firstLoan.state || '';
+        if (!normalizedProfile.zipcode) normalizedProfile.zipcode = firstLoan.zipcode || '';
         setSelectedProfile({ ...normalizedProfile });
       }
-      
-      setMessage('');
-      setMessageType('');
-      const totalLoans = (categorized.active?.length || 0) + (categorized.redeemed?.length || 0) + (categorized.forfeited?.length || 0) + (categorized.overdue?.length || 0);
-      logger.info('Customer loans loaded', { customerId: profile.id, totalLoans });
+
+      setMessage(''); setMessageType('');
+      logger.info('Customer loans loaded', { customerId: normalizedProfile.id, total: (categorized.active.length + categorized.overdue.length + categorized.redeemed.length + categorized.forfeited.length) });
     } catch (error) {
       const parsedError = error.parsedError || parseError(error);
       const userMessage = error.userMessage || getErrorMessage(parsedError);
-      setMessage(userMessage);
-      setMessageType('error');
+      setMessage(userMessage); setMessageType('error');
       logger.error('Error loading customer loans', parsedError);
     } finally {
       setLoading(false);

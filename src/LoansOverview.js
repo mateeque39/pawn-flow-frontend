@@ -26,7 +26,34 @@ const LoansOverview = ({ loggedInUser }) => {
         overdueCount: response.data?.overdueCount
       });
 
-      const loans = response.data?.loans || [];
+      const rawLoans = response.data?.loans || [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const loans = rawLoans.map(loan => {
+        const statusLower = String(loan.status || '').toLowerCase();
+        const dueDate = loan.due_date ? new Date(loan.due_date) : null;
+        const dueDateValid = dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
+        const isPastDue = dueDateValid && dueDate < today;
+        const isOverdue = statusLower === 'overdue'
+          || (isPastDue && statusLower !== 'redeemed' && statusLower !== 'forfeited');
+
+        const daysOverdue = isOverdue && dueDateValid
+          ? Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)))
+          : 0;
+
+        const statusDisplay = isOverdue
+          ? 'OVERDUE'
+          : (loan.status ? loan.status.toUpperCase() : 'ACTIVE');
+
+        return {
+          ...loan,
+          isOverdue,
+          daysOverdue,
+          statusDisplay
+        };
+      });
+
       setAllLoans(loans);
 
       // Split into overdue and active
@@ -145,8 +172,8 @@ const LoansOverview = ({ loggedInUser }) => {
 
           <div className="loan-row">
             <span className="label">Status:</span>
-            <span className={`value status-badge status-${loan.status?.toLowerCase()}`}>
-              {loan.status?.toUpperCase() || 'ACTIVE'}
+            <span className={`value status-badge status-${(loan.statusDisplay || loan.status || 'ACTIVE').toLowerCase()}`}>
+              {loan.statusDisplay || loan.status?.toUpperCase() || 'ACTIVE'}
             </span>
           </div>
 

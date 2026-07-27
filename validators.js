@@ -173,10 +173,106 @@ function validateCustomerData(customerData) {
   };
 }
 
+/**
+ * Map request from camelCase (frontend) to snake_case (database)
+ * Handles conversion of frontend payload to database field names
+ */
+function mapRequestToDb(body) {
+  return {
+    // Loan fields
+    loan_amount: body.loanAmount,
+    interest_rate: body.interestRate,
+    interest_amount: body.interestAmount,
+    total_payable_amount: body.totalPayableAmount,
+    recurring_fee: body.recurringFee,
+    item_category: body.itemCategory,
+    item_description: body.itemDescription,
+    collateral_description: body.collateralDescription,
+    collateral_image: body.collateralImage,
+    customer_note: body.customerNote,
+    loan_issued_date: body.loanIssuedDate,
+    due_date: body.dueDate,
+    loan_term: body.loanTerm,
+    transaction_number: body.transactionNumber,
+    previous_loan_amount: body.previousLoanAmount,
+    
+    // User fields
+    user_id: body.userId,
+    created_by_user_id: body.createdByUserId,
+    created_by_username: body.createdByUsername,
+    
+    // Customer fields
+    first_name: body.firstName,
+    last_name: body.lastName,
+    email: body.email,
+    home_phone: body.homePhone,
+    mobile_phone: body.mobilePhone,
+    birthdate: body.birthdate,
+    id_type: body.idType,
+    id_number: body.idNumber,
+    referral: body.referral,
+    identification_info: body.identificationInfo,
+    street_address: body.streetAddress,
+    city: body.city,
+    state: body.state,
+    zipcode: body.zipcode,
+    customer_number: body.customerNumber,
+    customer_id: body.customerId,
+    
+    // Other fields that might be snake_case already
+    ...body
+  };
+}
+
+/**
+ * Calculate loan amounts based on principal and rate
+ */
+function calculateLoanAmounts(loanAmount, interestRate, recurringFee = 0) {
+  const principal = parseFloat(loanAmount) || 0;
+  const rate = parseFloat(interestRate) || 0;
+  const recurring = parseFloat(recurringFee) || 0;
+  
+  const interestAmount = (principal * rate) / 100;
+  const totalPayable = principal + interestAmount + recurring;
+  
+  return {
+    principal,
+    interestAmount: parseFloat(interestAmount.toFixed(2)),
+    recurringFee: recurring,
+    totalPayable: parseFloat(totalPayable.toFixed(2))
+  };
+}
+
+/**
+ * Validate loan amounts
+ */
+function validateLoanAmounts(loanAmount, interestRate, loanTerm) {
+  const amount = parseFloat(loanAmount);
+  const rate = parseFloat(interestRate);
+  const term = parseInt(loanTerm);
+
+  if (isNaN(amount) || amount <= 0) {
+    return { valid: false, error: 'Loan amount must be greater than 0' };
+  }
+
+  if (isNaN(rate) || rate < 0 || rate > 100) {
+    return { valid: false, error: 'Interest rate must be between 0 and 100' };
+  }
+
+  if (isNaN(term) || term <= 0) {
+    return { valid: false, error: 'Loan term must be greater than 0 days' };
+  }
+
+  return { valid: true };
+}
+
 module.exports = {
   formatLoanResponse,
   validateEmail,
   validatePhoneNumber,
   validateLoanData,
-  validateCustomerData
+  validateCustomerData,
+  mapRequestToDb,
+  calculateLoanAmounts,
+  validateLoanAmounts
 };

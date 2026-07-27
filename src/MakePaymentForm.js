@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { http } from './services/httpClient';
 import { parseError, getErrorMessage } from './services/errorHandler';
 import logger from './services/logger';
+import { generateLoanPDFAsBase64 } from './utils/pdfGenerator';
 
 const MakePaymentForm = ({ loggedInUser }) => {
   const [transactionNumber, setTransactionNumber] = useState("");
@@ -159,10 +160,24 @@ const MakePaymentForm = ({ loggedInUser }) => {
         setPaymentHistory([responseData.paymentHistory, ...paymentHistory]);
       }
 
-      // Store receipt PDF if available and auto-download it.
-      if (responseData.receiptPDF) {
-        setReceiptPDF(responseData.receiptPDF);
-        handleDownloadReceipt(responseData.receiptPDF, responseData.loan || loan);
+      // Generate receipt PDF after successful payment
+      try {
+        const updatedLoan = updatedLoanResponse?.data?.loan || updatedLoanResponse?.loan || responseData.loan;
+        const pdfResult = await generateLoanPDFAsBase64(updatedLoan, {
+          paymentAmount,
+          paymentMethod,
+          paymentDate: new Date().toLocaleDateString()
+        });
+        
+        if (pdfResult.success && pdfResult.base64) {
+          setReceiptPDF(pdfResult.base64);
+          handleDownloadReceipt(pdfResult.base64, updatedLoan);
+          logger.info('Receipt PDF generated successfully after payment', { loanId: loan.id });
+        }
+      } catch (pdfError) {
+        console.error('Error generating receipt PDF:', pdfError);
+        logger.error('Error generating receipt PDF after payment', pdfError);
+        // Don't fail the payment if PDF generation fails
       }
 
       setPaymentAmount("");

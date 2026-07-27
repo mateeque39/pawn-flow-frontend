@@ -10,8 +10,26 @@ require('dotenv').config();
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+const defaultCorsOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5000',
+  'https://www.pawnflowsoftware.com'
+];
+
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean)
+  : defaultCorsOrigins;
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy: origin '${origin}' is not allowed`));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: '*'
@@ -362,6 +380,7 @@ app.post('/create-loan', async (req, res) => {
       interest_rate: interestRate,
       interest_amount: inputInterestAmount,
       total_payable_amount: inputTotalPayableAmount,
+      recurring_fee: inputRecurringFee,
       item_category,
       item_description,
       collateral_description,
@@ -410,8 +429,9 @@ app.post('/create-loan', async (req, res) => {
     const totalLoanAmount = parseFloat(previousLoanAmount || 0) + parseFloat(loanAmount);
     const calculatedInterestAmount = parseFloat(inputInterestAmount) || 
       (totalLoanAmount * parseFloat(interestRate)) / 100;
+    const calculatedRecurringFee = parseFloat(inputRecurringFee) || 0;
     const calculatedTotalPayableAmount = parseFloat(inputTotalPayableAmount) || 
-      (totalLoanAmount + calculatedInterestAmount);
+      (totalLoanAmount + calculatedInterestAmount + calculatedRecurringFee);
 
     // Calculate or use provided due date
     let dueDate;
@@ -1941,6 +1961,7 @@ app.post('/customers/:customerId/loans', async (req, res) => {
       interest_rate: interestRate,
       interest_amount: inputInterestAmount,
       total_payable_amount: inputTotalPayableAmount,
+      recurring_fee: inputRecurringFee,
       item_category,
       item_description,
       collateral_description,
@@ -1983,8 +2004,9 @@ app.post('/customers/:customerId/loans', async (req, res) => {
     const totalLoanAmount = parseFloat(previousLoanAmount || 0) + parseFloat(loanAmount);
     const calculatedInterestAmount = parseFloat(inputInterestAmount) || 
       (totalLoanAmount * parseFloat(interestRate)) / 100;
+    const calculatedRecurringFee = parseFloat(inputRecurringFee) || 0;
     const calculatedTotalPayableAmount = parseFloat(inputTotalPayableAmount) || 
-      (totalLoanAmount + calculatedInterestAmount);
+      (totalLoanAmount + calculatedInterestAmount + calculatedRecurringFee);
 
     // Calculate or use provided due date
     let dueDate;
