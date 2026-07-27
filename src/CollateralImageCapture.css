@@ -1,0 +1,143 @@
+.collateral-image-capture-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.capture-modal-content {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.capture-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+.capture-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.close-btn {
+  background-color: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.capture-options {
+  padding: 20px;
+}
+
+.webcam-container {
+  padding: 15px 0;
+}
+
+.preview-container {
+  padding: 15px 0;
+}
+
+.btn-primary,
+.btn-success,
+.btn-secondary {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #667eea;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #5568d3;
+}
+
+.btn-success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #45a049;
+}
+
+.btn-secondary {
+  background-color: #e0e6ed;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background-color: #d0d6dd;
+}
+
+.alert {
+  padding: 12px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.alert-error {
+  background-color: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .collateral-image-capture-modal {
+    padding: 10px;
+  }
+
+  .capture-modal-content {
+    padding: 20px;
+    max-height: 95vh;
+  }
+
+  .capture-modal-header h3 {
+    font-size: 16px;
+  }
+
+  .capture-options {
+    padding: 15px;
+  }
+}
